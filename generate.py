@@ -8,7 +8,6 @@ import lattice_collection as lc
 from multiprocessing import Pool
 import functools
 
-
 ### settings
 Nt = 4
 Nx = 4
@@ -40,9 +39,9 @@ for b in betas:
 
 ### initialize multiprocessing
 p = Pool(threads)
-### function to be calculated need to use functools to give certain parameters now. otherwise does not work with map
+
+### function to be calculated needs to use functools to work with map
 func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, Nmatrix=Nmatrix, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
 p.map(func, betas) # call multiprocessing map function
 p.terminate()      # terminate multiprocessing
 
-print("Success")

@@ -38,9 +38,8 @@ def fn_line_move_backward(U, line, txyz, direction):
     new_line = np.dot(line, link)
     return new_line, new_txyz
 
-
 ### plaquette calculation
-def fn_plaquette(U,t,x,y,z,mu,nu):
+def fn_plaquette(U, t, x, y, z, mu, nu):
     Nt = len(U)
     Nx = len(U[0])
     Ny = len(U[0][0])
@@ -65,10 +64,10 @@ def fn_energy_density(U, beta):
                 for z in range(Nz):
                     for mu in range(4):
                         for nu in range(mu):
-                            plaq = fn_plaquette(U,t,x,y,z,mu,nu)
-                            plaq = (np.add(plaq, plaq.conj().T))  # avg both orientations averaged
-                            plaq = np.trace(plaq.real) /  3. / 2. # divide by 3 for su3 and 2 for both orientations
-                            if 0 == mu or 0 == nu:                # a temporal plaquette
+                            plaq = fn_plaquette(U, t, x, y, z, mu, nu)
+                            plaq = (np.add(plaq, plaq.conj().T))       # avg both orientations averaged
+                            plaq = np.trace(plaq.real) / 3. / 2.       # divide by 3 for su3 and 2 for both orientations
+                            if mu == 0 or nu == 0:                     # a temporal plaquette
                                 temporal += (1 - plaq) 
                             else:
                                 spatial  += (1 - plaq)
@@ -80,16 +79,15 @@ def fn_energy_density(U, beta):
 #@numba.njit
 def fn_average_plaquette(U):
     Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    loops = 6.
     res = np.zeros(np.shape(U[0,0,0,0,0,:,:]), dtype='complex128')
     for t in range(Nt):
         for x in range(Nx):
             for y in range(Ny):
                 for z in range(Nz):
-                    for mu in range(4):
+                    for mu in range(1, 4):
                         for nu in range(mu):
                             res = np.add(res, fn_plaquette(U, t, x, y, z, mu, nu))
-    return np.trace(res).real / 3. / Nx / Ny / Nz / Nt / loops
+    return np.trace(res).real / 3. / Nt / Nx / Ny / Nz / 6.
 
 ### Wilson action at a specific point
 def fn_eval_point_S(U, t, x, y, z, beta, u0 = 1.):
@@ -97,7 +95,6 @@ def fn_eval_point_S(U, t, x, y, z, beta, u0 = 1.):
     for nu in range(4):  #sum over \mu > \nu spacetime dimensions
         for mu in range(nu):
             tmp += fn_plaquette(U, t, x, y, z, mu, nu)
-    #factor of 6 in front of beta comes from summation over directions
     s_wilson_density = 6. * beta - ( beta * np.trace(tmp).real ) / 3. / u0**4
     return s_wilson_density
 
@@ -314,7 +311,6 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, Nmatrix, e
     print('      Nhits = ' + str(Nhits))
     print('      start = ' + str(startcfg))
     print('     sweeps = ' + str(Ncfg))
-
     
     if startcfg == 0:
         U = lattice(Nt, Nx, Ny, Nz, beta, u0)
@@ -538,10 +534,10 @@ class lattice():
         return (5. * plaquette / self.u0**4 / 9.) - (rectangle / self.u0**6 / 36.)  
 
     
-    ### Difference of action. Gets link, updated link, and staple A
-    def deltaS(self, link, updated_link, A):
-        change = np.trace(np.dot((updated_link - link), A))
-        return (-self.beta * np.real(change))
+    ### Difference of action. Gets link, updated link, and staple
+    def deltaS(self, link, updated_link, staple):
+        change = np.trace(np.dot((updated_link - link), staple))
+        return -self.beta * np.real(change)
 
     #@numba.njit
     def plaquette(self, t, x, y, z, mu, nu):
@@ -557,17 +553,15 @@ class lattice():
     #@numba.njit
     def average_plaquette(self):
         Nt, Nx, Ny, Nz = self.Nt, self.Nx, self.Ny, self.Nz
-        loops = 6.
         res = np.zeros(np.shape(self.U[0, 0, 0, 0, 0, :, :]), dtype='complex128')
         for t in range(Nt):
             for x in range(Nx):
                 for y in range(Ny):
                     for z in range(Nz):
-                        for mu in range(4):
+                        for mu in range(1, 4):
                             for nu in range(mu):
                                 res = np.add(res, self.plaquette(t, x, y, z, mu, nu))
-        res = np.trace(res).real / 3.
-        return res / Nx / Ny / Nz / Nt / loops
+        return np.trace(res).real / 3. / Nt/ Nx / Ny / Nz / 6.
     
     
     ### Markov chain sweep. Requires: 

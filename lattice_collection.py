@@ -21,12 +21,11 @@ def fn_lattice_collection(action, Nt, Nx, Ny, Nz, beta, start, end, step = 1, pa
     for cfg in range(start, end + 1, step):
         U = fn_load_configuration(action, Nt, Nx, Ny, Nz, beta, cfg, path=path)
         collection.append(U)
-    
     print("Configurations for beta ", beta, " collectetd.\n")
     return collection
 
-### Loads configuration given the action, dimensions, beta and number of configuration
-### configuration must be in folder in same directory
+### Loads configuration given the action, dimensions, beta and number of configurations.
+### Configuration must be in folder in same directory.
 def fn_load_configuration(action, Nt, Nx, Ny, Nz, beta, cfg, path = ""):
     name = action +'_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100))
     tmp = np.load(path + name + '/link_' + name + '_' + str(cfg))
