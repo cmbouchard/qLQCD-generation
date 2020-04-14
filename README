@@ -1,0 +1,19 @@
+ver 1
+14 April 2020
+Chris Bouchard
+
+* python script to generate quenched lattice QCD gauge fields 
+* user interface via generate.py
+  - specify action (W=Wilson, WR=Wilson with rectangle improvement)
+  - to tadpole improve, add "_T" to end of action
+* helper functions and classes in gauge_latticeqcd.py and lattice_collection.py
+  includes code to update the lattices and perform measurments.
+* incorporates Panagiotis Stylianou's updates to original code including:
+  - improved generation of updates via SU(2) matrices
+  - use of multiprocessing
+  - the addition of measurement code for several observables
+
+
+To do:
+* optimize (better numba implementation, ...)
+* add gradient flow and scale-setting measurement code to determine lattice spacing
