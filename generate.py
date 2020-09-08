@@ -9,14 +9,14 @@ from multiprocessing import Pool
 import functools
 
 ### settings
-Nt = 4
-Nx = 4
-Ny = 4
-Nz = 4
-Ncfg = 20          # number of lattices to generate
-action = 'WR_T'    # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
-betas = [5.2]      # betas to be generated, beta = 6/g^2
-startcfg = 0       # warm start (0) or existing cfg number to start the Markov chain
+Nt = 14
+Nx = 14
+Ny = 14
+Nz = 14
+Ncfg = 600          # number of lattices to generate
+action = 'W'    # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
+betas = [5.7]      # betas to be generated, beta = 6/g^2
+startcfg = 37       # warm start (0) or existing cfg number to start the Markov chain
 Nhits = 10         # hits between each update
 Nmatrix = 10000    # number of random SU(3) matrices to be used for updates
 epsilon = 0.2      # how "far" away from identity the updates will be
@@ -44,4 +44,3 @@ p = Pool(threads)
 func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, Nmatrix=Nmatrix, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
 p.map(func, betas) # call multiprocessing map function
 p.terminate()      # terminate multiprocessing
-

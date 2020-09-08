@@ -3,6 +3,9 @@ import numba
 import numpy as np
 import sys
 import lattice_collection as lc
+import tools_v1 as tool
+import datetime
+import params
 
 ### File with Lattice class to sweep and generate lattices and functions: 
 ### plaquette, average plaquette, polyakov, planar and non-planar wilson loops, wilson action,
@@ -90,13 +93,16 @@ def fn_average_plaquette(U):
     return np.trace(res).real / 3. / Nt / Nx / Ny / Nz / 6.
 
 ### Wilson action at a specific point
+### S = \sum_x \sum_{\mu > \nu} (1 - 1/3 Re Tr P_{\mu\nu}(x))
+###   * P_{\mu\nu}(x) = U_\mu(x) U_\nu(x + \hat\mu) U^\dagger_mu(x + \hat\nu) U^\dagger_\nu(x)
+###   * fn_plaquette(U,t,x,y,z,mu,nu) returns the product of links around the plaquette, P_{\mu\nu}(x)
+###   * beta = 6 / g^2
 def fn_eval_point_S(U, t, x, y, z, beta, u0 = 1.):
     tmp = 0.
-    for nu in range(4):  #sum over \mu > \nu spacetime dimensions
-        for mu in range(nu):
-            tmp += fn_plaquette(U, t, x, y, z, mu, nu)
-    s_wilson_density = 6. * beta - ( beta * np.trace(tmp).real ) / 3. / u0**4
-    return s_wilson_density
+    for mu in range(1, 4):  #sum over \mu > \nu spacetime dimensions
+        for nu in range(mu):
+            tmp += ( 1. - np.real(np.trace( fn_plaquette(U, t, x, y, z, mu, nu) )) / 3. / u0**4 )
+    return beta * tmp
 
 ### Calculate density for given operator.
 ### Requires lattice and operator to calculate along with all arguments that need to be passed to operator.
@@ -302,7 +308,8 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, Nmatrix, e
     ###  2. read in a previously generated configuration and continue with that Markov chain.
 
     name = action +'_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100))
-    
+    aa = tool.fn_a( beta )
+
     print('simulation parameters:')
     print('      action: ' + action)
     print('Nt,Nx,Ny,Nz = ' + str(Nt) + ',' + str(Nx) + ',' + str(Ny) + ',' + str(Nz))
@@ -311,11 +318,15 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, Nmatrix, e
     print('      Nhits = ' + str(Nhits))
     print('      start = ' + str(startcfg))
     print('     sweeps = ' + str(Ncfg))
-    
+    print('          a = ' + str(aa) + ' fm')
+    print('        1/a = ' + str(params.hbarc_GeVfm / aa) + ' GeV')
+    print('        aNx = ' + str(aa * Nx) + ' fm')
+    print('Temperature = ' + str(1000. * params.hbarc_GeVfm / (Nt * aa)) + ' MeV')
+
     if startcfg == 0:
         U = lattice(Nt, Nx, Ny, Nz, beta, u0)
     else:
-        print(action)
+        #print(action)
         U = lc.fn_load_configuration(action, Nt, Nx, Ny, Nz, beta, startcfg, "./")
         U = lattice(Nt, Nx, Ny, Nz, beta, u0, U)
     
@@ -433,21 +444,21 @@ class lattice():
                 start_txyz = [t, x, y, z]
                 start_txyz[mu] += 1
 
-                #positive plaquette "above"
+                ### staple 1
                 line1 = 1.
                 line1, next_txyz = self.line_move_forward(line1, start_txyz, nu)
                 line1, next_txyz = self.line_move_backward(line1, next_txyz, mu)
                 line1, next_txyz = self.line_move_backward(line1, next_txyz, nu)
                 tmp += line1
                 
-                #negative plaquette "below
+                ### staple 2
                 line2 = 1.
                 line2, next_txyz = self.line_move_backward(line2, start_txyz, nu)
                 line2, next_txyz = self.line_move_backward(line2, next_txyz, mu)
                 line2, next_txyz = self.line_move_forward(line2, next_txyz, nu)
                 tmp += line2
         
-        return tmp / 3. / self.u0**4
+        return tmp / self.u0**3
     
     ### Improved action with rectangles
     def dS_staple_rectangle(self, t, x, y, z, mu):
@@ -531,13 +542,19 @@ class lattice():
                 rectangle += line
 
         ### Return staple corrected with rectangles
-        return (5. * plaquette / self.u0**4 / 9.) - (rectangle / self.u0**6 / 36.)  
+        return (5. * plaquette / self.u0**3 / 9.) - (rectangle / self.u0**5 / 36.)  
 
     
     ### Difference of action. Gets link, updated link, and staple
+    #def deltaS(self, link, updated_link, staple):
+    #    change = np.trace(np.dot((updated_link - link), staple))
+    #    return -self.beta * np.real(change)
+
+
+    ### Difference of action at a point for fixed staple. Gets link, updated link, and staple A.
     def deltaS(self, link, updated_link, staple):
-        change = np.trace(np.dot((updated_link - link), staple))
-        return -self.beta * np.real(change)
+        return (-self.beta / 3.0 / self.u0 ) * np.real(np.trace(np.dot( (updated_link - link), staple)))
+
 
     #@numba.njit
     def plaquette(self, t, x, y, z, mu, nu):
@@ -585,6 +602,8 @@ class lattice():
 
         ### loop through number of configurations to be generated
         for i in range(Ncfg - 1):
+            print('starting sweep ' + str(i) + ':  ' + str(datetime.datetime.now()))
+
             ### loop through spacetime dimensions
             for t in range(self.Nt):
                 for x in range(self.Nx):
@@ -633,7 +652,7 @@ class lattice():
             ### save if name given
             if (save_name):
                 idx = int(i) + initial_cfg
-                print(int( idx ))
+                #print(int( idx ))
                 output_idx = output + str(int( idx ))
                 file_out = open(output_idx, 'wb')
                 np.save(file_out, self.U)  #NOTE: np.save without opening first appends .npy

@@ -1,5 +1,5 @@
-ver 3
-14 April 2020
+ver 4
+08 September 2020
 Chris Bouchard
 
 * python script to generate quenched lattice QCD gauge fields 
@@ -12,7 +12,7 @@ Chris Bouchard
   - improved generation of updates via SU(2) matrices
   - use of multiprocessing
   - the addition of measurement code for several observables
-
+* adds calculation of lattice spacing based on beta
 
 To do:
 * optimize (better numba implementation, ...)
