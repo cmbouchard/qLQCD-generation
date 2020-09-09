@@ -13,10 +13,10 @@ Nt = 14
 Nx = 14
 Ny = 14
 Nz = 14
-Ncfg = 600          # number of lattices to generate
+Ncfg = 1000          # number of lattices to generate
 action = 'W'    # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
 betas = [5.7]      # betas to be generated, beta = 6/g^2
-startcfg = 37       # warm start (0) or existing cfg number to start the Markov chain
+startcfg = 635       # warm start (0) or existing cfg number to start the Markov chain
 Nhits = 10         # hits between each update
 Nmatrix = 10000    # number of random SU(3) matrices to be used for updates
 epsilon = 0.2      # how "far" away from identity the updates will be
