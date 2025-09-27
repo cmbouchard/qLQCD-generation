@@ -3,8 +3,8 @@ import numpy as np
 homepath = '/Users/cmb/Documents/gauge_fields/qLQCD-generation/'
 
 ### specify data
-Nstart = 10000
-Nend = 19998
+Nstart = 0
+Nend = 1000
 Nt = 4
 Nx = 4
 Ny = 4
@@ -13,8 +13,8 @@ action = 'W'
 beta = 5.70
 
 ### configurations to analyze
-Nstart_analysis = 10000
-Nend_analysis = 19998
+Nstart_analysis = 0
+Nend_analysis = 1002
 
 
 ### set threshold for autocorrelation function
@@ -28,12 +28,6 @@ data = np.loadtxt(dfile, usecols=1, skiprows=1)
 ### Name output file
 #Nend_analysis = len(data) * Nskip
 fstring_out = str(beta * 100) + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_' + action + '_' + str(Nstart_analysis) + '-' + str(Nend_analysis) + '.dat'
-
-
-#print(len(data))
-# prune data from Nstart_analysis/Nskip
-#data = data[int(Nstart_analysis/Nskip):Nend_analysis]
-#print(len(data))
 
 ### Calculate autocorrelation function (ACF)
 acf = np.correlate(data - np.mean(data), data - np.mean(data), mode='full')
@@ -53,7 +47,7 @@ lag_positive = lag_positive[:len(data)]
 acf_positive = acf_positive[:len(data)]
 
 ### output data to file
-fout = open(homepath + 'A_v_lag_' + '_' + fstring_out, 'w')
+fout = open(homepath + 'A_v_lag_' + fstring_out, 'w')
 fout.write('#1:lag  2:A\n')
 for jj in range(len(data)):
     fout.write(str(lag_positive[jj]) + ' ' + str(acf_positive[jj])+'\n')
