@@ -1,5 +1,5 @@
-ver 5
-27 September 2025
+ver 6
+16 July 2026
 Chris Bouchard
 
 * python script to generate quenched lattice QCD gauge fields 
@@ -20,10 +20,14 @@ Chris Bouchard
     useful for tracking thermalization
   - autocorr.py: calculates autocorrelation over a specified range of configurations; 
     uses the output of action_v_cfg.py as input
+  - topo.py: calculation of topological charge over a specified range of configurations 
 * ver5, 27 Sep 2025: 
   - corrected calculation of staples in gauge_latticeqcd.py
   - removed default use of multicore
-
+* ver6, 16 Jul 2026
+  - added calculation of topological charge script, topo.py
+  - topological charge now defaults to use of clover term, the calculation of which has 
+    been added to gauge_latticeqcd.py
 To do:
 * optimize (better numba implementation, ...)
 * add gradient flow and scale-setting measurement code to determine lattice spacing

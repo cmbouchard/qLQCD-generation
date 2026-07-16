@@ -16,7 +16,7 @@ import params
 ### some functions are reproduced here, outside of Lattice class, to be accessible via function call.
 ### - a bit redundant
 def fn_periodic_link(U, txyz, direction):
-    Nt, Nx, Ny, Nz = len(U), len(U[0]), len(U[0][0]), len(U[0][0][0])
+    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
     return U[txyz[0] % Nt][txyz[1] % Nx][txyz[2] %Ny][txyz[3] % Nz][direction]
 
 def fn_move_forward_link(U, txyz, direction):
@@ -43,11 +43,8 @@ def fn_line_move_backward(U, line, txyz, direction):
 
 ### plaquette calculation
 def fn_plaquette(U, t, x, y, z, mu, nu):
-    Nt = len(U)
-    Nx = len(U[0])
-    Ny = len(U[0][0])
-    Nz = len(U[0][0][0])
-    start_txyz = [t,x,y,z]
+    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+    start_txyz = [t, x, y, z]
     result = 1. + 0. * 1J
     result, next_txyz = fn_line_move_forward(U, result, start_txyz, mu)
     result, next_txyz = fn_line_move_forward(U, result, next_txyz, nu)
@@ -55,11 +52,41 @@ def fn_plaquette(U, t, x, y, z, mu, nu):
     result, next_txyz = fn_line_move_backward(U, result, next_txyz, nu)    
     return result
 
+### clover
+def fn_clover(U, t, x, y, z, mu, nu):
+    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+    start_txyz = [t, x, y, z]
+    # upper right
+    result1 = 1. + 0. * 1J
+    result1, next_txyz = fn_line_move_forward(U, result1, start_txyz, mu)
+    result1, next_txyz = fn_line_move_forward(U, result1, next_txyz, nu)
+    result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, mu)
+    result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, nu)
+    # lower right
+    result2 = 1. + 0. * 1J
+    result2, next_txyz = fn_line_move_backward(U, result2, start_txyz, nu)
+    result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, mu)
+    result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, nu)
+    result2, next_txyz = fn_line_move_backward(U, result2, next_txyz, mu)
+    # lower left
+    result3 = 1. + 0. * 1J
+    result3, next_txyz = fn_line_move_backward(U, result3, start_txyz, mu)
+    result3, next_txyz = fn_line_move_backward(U, result3, next_txyz, nu)
+    result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, mu)
+    result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, nu)
+    # upper left
+    result4 = 1. + 0. * 1J
+    result4, next_txyz = fn_line_move_forward(U, result4, start_txyz, nu)
+    result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, mu)
+    result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, nu)
+    result4, next_txyz = fn_line_move_forward(U, result4, next_txyz, mu)
+    return (result1 + result2 + result3 + result4) / 4.
+    
 ### Kogut et al, PRL51 (1983) 869, Quark and gluon latent heats at the deconfinement phase transtion in SU(3) gauge theory
 ### energy density: \varepsilon = \beta / Nt / Ns^3 { (\sum_{space} 1 - ReTrUUUU /3 ) - (\sum{time} 1 - ReTrUUUU /3 )}
 ### this is just the leading term
 def fn_energy_density(U, beta):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])    
+    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
     temporal, spatial = 0., 0.
     for t in range(Nt):
         for x in range(Nx):
@@ -275,27 +302,37 @@ def fn_polyakov(U):
 
 ### Polyakov density
 def fn_polyakov_atpoint(U, x, y, z):
-    Nt, Nx, Ny, Nz = len(U), len(U[0]), len(U[0][0]), len(U[0][0][0])
+    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
     line = 1.
     for t in range(Nt):
         line = np.dot(line, U[t][x][y][z][0])
     return np.trace(line)
 
-### topological charge that works with only 6 terms
+### topological charge density
 def fn_topological_charge(U, t, x, y, z):
+    # get the field strength
     F01 = fn_F_munu(U, t, x, y, z, 0, 1)
-    F23 = fn_F_munu(U, t, x, y, z, 2, 3)
     F02 = fn_F_munu(U, t, x, y, z, 0, 2)
-    F31 = fn_F_munu(U, t, x, y, z, 3, 1)
     F03 = fn_F_munu(U, t, x, y, z, 0, 3)
     F12 = fn_F_munu(U, t, x, y, z, 1, 2)
-    result = np.trace( np.dot(F01, F23) + np.dot(F02, F31) + np.dot(F03, F12))
-    return result / ( 4. * np.pi**2 )
+    F13 = fn_F_munu(U, t, x, y, z, 1, 3)
+    F23 = fn_F_munu(U, t, x, y, z, 2, 3)
+    # build the contraction, epsilon_abcd tr( F_ab F_cd )
+    result = 8. * ( np.trace( np.dot(F01, F23) ) - np.trace( np.dot(F02, F13) ) + np.trace( np.dot(F03, F12) ) )
+    return result / ( 32. * np.pi**2 )
 
 ### antihermitian, traceless version of field strength
 def fn_F_munu(U, t, x, y, z, mu, nu):
-    Pmunu = fn_plaquette(U, t, x, y, z, mu, nu)
-    return -1.0J * (np.subtract(Pmunu, Pmunu.conj().T) - np.trace(np.subtract(Pmunu, Pmunu.conj().T)) / 3.) / 2.
+    # build Wilson loop from plaquette
+    #W = fn_plaquette(U, t, x, y, z, mu, nu)
+    # alternatively, and better, build it from clover
+    W = fn_clover(U, t, x, y, z, mu, nu)
+    # pick off the field strength
+    W_H = np.subtract(W, W.conj().T)
+    # make it traceless
+    W_imp = W_H - np.trace(W_H) * np.eye(3, dtype=complex) / 3.
+    # pick off imaginary part
+    return -0.5J * W_imp
 
 
 #-------------Generation code -------------------

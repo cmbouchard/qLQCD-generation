@@ -7,16 +7,13 @@ import params
 
 
 ### Script to calculate the evolution of the 1x1 Wilson loop as a function of Monte Carlo time
-Nt = 4
-Nx = 4
-Ny = 4
-Nz = 4
+Nt, Nx, Ny, Nz = 6, 6, 6, 6
+
 action = 'W'
 beta = 5.7
 u0 = 1.0
 Nstart = 0
-Nend = 1002
-
+Nend = 2000
 
 dir = './' + action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100)) + '/'
 U_infile = dir + 'link_' + action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100)) + '_'

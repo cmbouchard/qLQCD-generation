@@ -1,1 +1,16 @@
 *~
+A_v_lag_570.0_4x4x4x4_W_1000-5000.dat
+Q_v_cfg_W_4x4x4x4_b570.dat
+Q_v_cfg_W_6x6x6x6_b570.dat
+Q_v_cfg_W_8x8x8x8_b570.dat
+S_v_cfg_570_4x4x4x4_W_0-5000.dat
+W_10x10x10x10_b570/
+W_4x4x4x4_b570/
+W_6x6x6x6_b570/
+W_8x8x8x8_b570/
+__pycache__/
+histo_Q.gp
+measure_SQCD_bins.py
+measure_SQCD_bins.py_remove
+plaquette_v_cfg_570_6x6x6x6_W.dat
+plaquette_v_cfg_570_8x8x8x8_W.dat

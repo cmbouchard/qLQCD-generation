@@ -4,7 +4,7 @@ homepath = '/Users/cmb/Documents/gauge_fields/qLQCD-generation/'
 
 ### specify data
 Nstart = 0
-Nend = 1000
+Nend = 5000
 Nt = 4
 Nx = 4
 Ny = 4
@@ -13,8 +13,8 @@ action = 'W'
 beta = 5.70
 
 ### configurations to analyze
-Nstart_analysis = 0
-Nend_analysis = 1002
+Nstart_analysis = 1000
+Nend_analysis = 5000
 
 
 ### set threshold for autocorrelation function
@@ -35,7 +35,7 @@ acf = np.correlate(data - np.mean(data), data - np.mean(data), mode='full')
 ### Normalize ACF
 acf /= acf[len(data)-1]
 
-### Find autocorrelation length (lag where ACF drops and stays below threshold)
+### Find autocorrelation length (lag where ACF drops below threshold)
 lag = np.arange(len(data))
 lag_positive = lag[lag >= 0]  # Only consider non-negative lags
 acf_positive = acf[len(data)-1:]  # Only consider non-negative ACF values

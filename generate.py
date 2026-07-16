@@ -9,22 +9,23 @@ import lattice_collection as lc
 #import functools
 
 ### settings
-Nt = 4
-Nx = 4
-Ny = 4
-Nz = 4
-startcfg = 0       # warm start (0) or existing cfg number to start the Markov chain
-Ncfg = 102          # number of lattices to generate
-action = 'W'    # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
-betas = [5.7]      # betas to be generated, beta = 6/g^2
+Nt, Nx, Ny, Nz = 10, 10, 10, 10
+
+startcfg = 0     # cold start (0) or existing cfg number to resume Markov chain from
+Ncfg = 2002        # number of lattices to generate (add 2 to the number you actually want)
+action = 'W'       # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
+betas = [5.7]      # beta values to be generated, beta = 6/g^2
+
 Nhits = 10         # hits between each update
 Nmatrix = 10000    # number of random SU(3) matrices to be used for updates
-epsilon = 0.2      # how "far" away from identity the updates will be
+epsilon = 0.3      # how "far" away from identity the updates will be; adjust for 20-50% acceptance
+                   # for b=5.7, 8^4, 0.2 -> 50%; 0.25 -> 42%; 0.3 -> 34%
 threads = 1        # threads used in multiprocessing
 
-Nu0_step = 1       # if tadpole improving, number of cfgs to skip between calculating u0.
-Nu0_avg = 1        # if tadpole improving, number of u0 values to average together before updating
-u0 = 1.            # u0 = <W11>^(1/4); if tadpole improving and continuing from existing lattices, set here.  Else ignore.
+### for tadpole improvement, else ignore
+Nu0_step = 1       # number of cfgs to skip between calculating u0
+Nu0_avg = 1        # number of u0 values to average together before updating
+u0 = 1.            # u0 = <W11>^(1/4); for cold start 1, if continuing from existing lattice, adjust to that value
 
 ### generate lattices
 for b in betas:
