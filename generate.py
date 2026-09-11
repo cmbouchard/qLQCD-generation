@@ -9,10 +9,10 @@ import lattice_collection as lc
 #import functools
 
 ### settings
-Nt, Nx, Ny, Nz = 10, 10, 10, 10
+Nt, Nx, Ny, Nz = 20, 10, 10, 10
 
-startcfg = 0     # cold start (0) or existing cfg number to resume Markov chain from
-Ncfg = 2002        # number of lattices to generate (add 2 to the number you actually want)
+startcfg = 10000     # cold start (0) or existing cfg number to resume Markov chain from
+Ncfg = 602        # number of lattices to generate (add 2 to the number you actually want)
 action = 'W'       # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
 betas = [5.7]      # beta values to be generated, beta = 6/g^2
 

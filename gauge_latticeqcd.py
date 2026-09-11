@@ -16,108 +16,179 @@ import params
 ### some functions are reproduced here, outside of Lattice class, to be accessible via function call.
 ### - a bit redundant
 def fn_periodic_link(U, txyz, direction):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    return U[txyz[0] % Nt][txyz[1] % Nx][txyz[2] %Ny][txyz[3] % Nz][direction]
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  return U[txyz[0] % Nt][txyz[1] % Nx][txyz[2] %Ny][txyz[3] % Nz][direction]
 
 def fn_move_forward_link(U, txyz, direction):
-    link = fn_periodic_link(U, txyz, direction)
-    new_txyz = txyz[:]
-    new_txyz[direction] += 1
-    return link, new_txyz
+  link = fn_periodic_link(U, txyz, direction)
+  new_txyz = txyz[:]
+  new_txyz[direction] += 1
+  return link, new_txyz
 
 def fn_move_backward_link(U, txyz, direction):
-    new_txyz = txyz[:]
-    new_txyz[direction] -= 1
-    link = fn_periodic_link(U, new_txyz, direction).conj().T
-    return link, new_txyz
+  new_txyz = txyz[:]
+  new_txyz[direction] -= 1
+  link = fn_periodic_link(U, new_txyz, direction).conj().T
+  return link, new_txyz
 
 def fn_line_move_forward(U, line, txyz, direction):
-    link, new_txyz = fn_move_forward_link(U, txyz, direction)
-    new_line = np.dot(line, link)
-    return new_line, new_txyz
+  link, new_txyz = fn_move_forward_link(U, txyz, direction)
+  new_line = np.dot(line, link)
+  return new_line, new_txyz
 
 def fn_line_move_backward(U, line, txyz, direction):
-    link, new_txyz = fn_move_backward_link(U, txyz, direction)
-    new_line = np.dot(line, link)
-    return new_line, new_txyz
+  link, new_txyz = fn_move_backward_link(U, txyz, direction)
+  new_line = np.dot(line, link)
+  return new_line, new_txyz
 
 ### plaquette calculation
 def fn_plaquette(U, t, x, y, z, mu, nu):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    start_txyz = [t, x, y, z]
-    result = 1. + 0. * 1J
-    result, next_txyz = fn_line_move_forward(U, result, start_txyz, mu)
-    result, next_txyz = fn_line_move_forward(U, result, next_txyz, nu)
-    result, next_txyz = fn_line_move_backward(U, result, next_txyz, mu)
-    result, next_txyz = fn_line_move_backward(U, result, next_txyz, nu)    
-    return result
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  start_txyz = [t, x, y, z]
+  result = 1. + 0. * 1J
+  result, next_txyz = fn_line_move_forward(U, result, start_txyz, mu)
+  result, next_txyz = fn_line_move_forward(U, result, next_txyz, nu)
+  result, next_txyz = fn_line_move_backward(U, result, next_txyz, mu)
+  result, next_txyz = fn_line_move_backward(U, result, next_txyz, nu)
+  return result
 
 ### clover
 def fn_clover(U, t, x, y, z, mu, nu):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    start_txyz = [t, x, y, z]
-    # upper right
-    result1 = 1. + 0. * 1J
-    result1, next_txyz = fn_line_move_forward(U, result1, start_txyz, mu)
-    result1, next_txyz = fn_line_move_forward(U, result1, next_txyz, nu)
-    result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, mu)
-    result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, nu)
-    # lower right
-    result2 = 1. + 0. * 1J
-    result2, next_txyz = fn_line_move_backward(U, result2, start_txyz, nu)
-    result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, mu)
-    result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, nu)
-    result2, next_txyz = fn_line_move_backward(U, result2, next_txyz, mu)
-    # lower left
-    result3 = 1. + 0. * 1J
-    result3, next_txyz = fn_line_move_backward(U, result3, start_txyz, mu)
-    result3, next_txyz = fn_line_move_backward(U, result3, next_txyz, nu)
-    result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, mu)
-    result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, nu)
-    # upper left
-    result4 = 1. + 0. * 1J
-    result4, next_txyz = fn_line_move_forward(U, result4, start_txyz, nu)
-    result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, mu)
-    result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, nu)
-    result4, next_txyz = fn_line_move_forward(U, result4, next_txyz, mu)
-    return (result1 + result2 + result3 + result4) / 4.
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  start_txyz = [t, x, y, z]
+  # upper right
+  result1 = 1. + 0. * 1J
+  result1, next_txyz = fn_line_move_forward(U, result1, start_txyz, mu)
+  result1, next_txyz = fn_line_move_forward(U, result1, next_txyz, nu)
+  result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, mu)
+  result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, nu)
+  # lower right
+  result2 = 1. + 0. * 1J
+  result2, next_txyz = fn_line_move_backward(U, result2, start_txyz, nu)
+  result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, mu)
+  result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, nu)
+  result2, next_txyz = fn_line_move_backward(U, result2, next_txyz, mu)
+  # lower left
+  result3 = 1. + 0. * 1J
+  result3, next_txyz = fn_line_move_backward(U, result3, start_txyz, mu)
+  result3, next_txyz = fn_line_move_backward(U, result3, next_txyz, nu)
+  result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, mu)
+  result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, nu)
+  # upper left
+  result4 = 1. + 0. * 1J
+  result4, next_txyz = fn_line_move_forward(U, result4, start_txyz, nu)
+  result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, mu)
+  result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, nu)
+  result4, next_txyz = fn_line_move_forward(U, result4, next_txyz, mu)
+  return (result1 + result2 + result3 + result4) / 4.
     
+### rectangle
+def fn_rectangle(U, t, x, y, z, mu, nu):
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  start_txyz = [t, x, y, z]
+  # horizontally aligned grouping of four
+  # upper right
+  result1 = 1. + 0. * 1J
+  result1, next_txyz = fn_line_move_forward(U, result1, start_txyz, mu)
+  result1, next_txyz = fn_line_move_forward(U, result1, next_txyz, mu)
+  result1, next_txyz = fn_line_move_forward(U, result1, next_txyz, nu)
+  result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, mu)
+  result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, mu)
+  result1, next_txyz = fn_line_move_backward(U, result1, next_txyz, nu)
+  # lower right
+  result2 = 1. + 0. * 1J
+  result2, next_txyz = fn_line_move_backward(U, result2, start_txyz, nu)
+  result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, mu)
+  result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, mu)
+  result2, next_txyz = fn_line_move_forward(U, result2, next_txyz, nu)
+  result2, next_txyz = fn_line_move_backward(U, result2, next_txyz, mu)
+  result2, next_txyz = fn_line_move_backward(U, result2, next_txyz, mu)
+  # lower left
+  result3 = 1. + 0. * 1J
+  result3, next_txyz = fn_line_move_backward(U, result3, start_txyz, mu)
+  result3, next_txyz = fn_line_move_backward(U, result3, next_txyz, mu)
+  result3, next_txyz = fn_line_move_backward(U, result3, next_txyz, nu)
+  result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, mu)
+  result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, mu)
+  result3, next_txyz = fn_line_move_forward(U, result3, next_txyz, nu)
+  # upper left
+  result4 = 1. + 0. * 1J
+  result4, next_txyz = fn_line_move_forward(U, result4, start_txyz, nu)
+  result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, mu)
+  result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, mu)
+  result4, next_txyz = fn_line_move_backward(U, result4, next_txyz, nu)
+  result4, next_txyz = fn_line_move_forward(U, result4, next_txyz, mu)
+  result4, next_txyz = fn_line_move_forward(U, result4, next_txyz, mu)
+  # vertically aligned grouping of four
+  # upper right
+  result5 = 1. + 0. * 1J
+  result5, next_txyz = fn_line_move_forward(U, result5, start_txyz, mu)
+  result5, next_txyz = fn_line_move_forward(U, result5, next_txyz, nu)
+  result5, next_txyz = fn_line_move_forward(U, result5, next_txyz, nu)
+  result5, next_txyz = fn_line_move_backward(U, result5, next_txyz, mu)
+  result5, next_txyz = fn_line_move_backward(U, result5, next_txyz, nu)
+  result5, next_txyz = fn_line_move_backward(U, result5, next_txyz, nu)
+  # lower right
+  result6 = 1. + 0. * 1J
+  result6, next_txyz = fn_line_move_backward(U, result6, start_txyz, nu)
+  result6, next_txyz = fn_line_move_backward(U, result6, next_txyz, nu)
+  result6, next_txyz = fn_line_move_forward(U, result6, next_txyz, mu)
+  result6, next_txyz = fn_line_move_forward(U, result6, next_txyz, nu)
+  result6, next_txyz = fn_line_move_forward(U, result6, next_txyz, nu)
+  result6, next_txyz = fn_line_move_backward(U, result6, next_txyz, mu)
+  # lower left
+  result7 = 1. + 0. * 1J
+  result7, next_txyz = fn_line_move_backward(U, result7, start_txyz, mu)
+  result7, next_txyz = fn_line_move_backward(U, result7, next_txyz, nu)
+  result7, next_txyz = fn_line_move_backward(U, result7, next_txyz, nu)
+  result7, next_txyz = fn_line_move_forward(U, result7, next_txyz, mu)
+  result7, next_txyz = fn_line_move_forward(U, result7, next_txyz, nu)
+  result7, next_txyz = fn_line_move_forward(U, result7, next_txyz, nu)
+  # upper left
+  result8 = 1. + 0. * 1J
+  result8, next_txyz = fn_line_move_forward(U, result8, start_txyz, nu)
+  result8, next_txyz = fn_line_move_forward(U, result8, next_txyz, nu)
+  result8, next_txyz = fn_line_move_backward(U, result8, next_txyz, mu)
+  result8, next_txyz = fn_line_move_backward(U, result8, next_txyz, nu)
+  result8, next_txyz = fn_line_move_backward(U, result8, next_txyz, nu)
+  result8, next_txyz = fn_line_move_forward(U, result8, next_txyz, mu)
+  
+  return (result1 + result2 + result3 + result4 + result5 + result6 + result7 + result8) / 8.
+  
 ### Kogut et al, PRL51 (1983) 869, Quark and gluon latent heats at the deconfinement phase transtion in SU(3) gauge theory
 ### energy density: \varepsilon = \beta / Nt / Ns^3 { (\sum_{space} 1 - ReTrUUUU /3 ) - (\sum{time} 1 - ReTrUUUU /3 )}
 ### this is just the leading term
 def fn_energy_density(U, beta):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    temporal, spatial = 0., 0.
-    for t in range(Nt):
-        for x in range(Nx):
-            for y in range(Ny):
-                for z in range(Nz):
-                    for mu in range(4):
-                        for nu in range(mu):
-                            plaq = fn_plaquette(U, t, x, y, z, mu, nu)
-                            plaq = (np.add(plaq, plaq.conj().T))       # avg both orientations averaged
-                            plaq = np.trace(plaq.real) / 3. / 2.       # divide by 3 for su3 and 2 for both orientations
-                            if mu == 0 or nu == 0:                     # a temporal plaquette
-                                temporal += (1. - plaq) 
-                            else:
-                                spatial  += (1. - plaq)
-    energy_dens = spatial - temporal
-    energy_des = energy_dens * beta / Nt / Nx / Ny / Nz
-    return energy_dens
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  temporal, spatial = 0., 0.
+  for t in range(Nt):
+    for x in range(Nx):
+      for y in range(Ny):
+        for z in range(Nz):
+          for mu in range(4):
+            for nu in range(mu):
+              plaq = fn_plaquette(U, t, x, y, z, mu, nu)
+              plaq = (np.add(plaq, plaq.conj().T))       # avg both orientations averaged
+              plaq = np.trace(plaq.real) / 3. / 2.       # divide by 3 for su3 and 2 for both orientations
+              if mu == 0 or nu == 0:                     # a temporal plaquette
+                temporal += (1. - plaq)
+              else:
+                spatial += (1. - plaq)
+  return (spatial - temporal) * beta / Nt / Nx / Ny / Nz
 
 ### calculate average plaquette for u0 = <P_{\mu\nu}>^0.25
 #@numba.njit
 def fn_average_plaquette(U):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    res = np.zeros(np.shape(U[0,0,0,0,0,:,:]), dtype='complex128')
-    for t in range(Nt):
-        for x in range(Nx):
-            for y in range(Ny):
-                for z in range(Nz):
-                    for mu in range(1, 4):
-                        for nu in range(mu):
-                            res = np.add(res, fn_plaquette(U, t, x, y, z, mu, nu))
-    return np.trace(res).real / 3. / Nt / Nx / Ny / Nz / 6.
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  res = np.zeros(np.shape(U[0,0,0,0,0,:,:]), dtype='complex128')
+  for t in range(Nt):
+    for x in range(Nx):
+      for y in range(Ny):
+        for z in range(Nz):
+          for mu in range(1, 4):
+            for nu in range(mu):
+              res = np.add(res, fn_plaquette(U, t, x, y, z, mu, nu))
+  return np.trace(res).real / 3. / Nt / Nx / Ny / Nz / 6.
 
 ### Wilson action at a specific point
 ### S = \sum_x \sum_{\mu > \nu} (1 - 1/3 Re Tr P_{\mu\nu}(x))
@@ -125,214 +196,221 @@ def fn_average_plaquette(U):
 ###   * fn_plaquette(U,t,x,y,z,mu,nu) returns the product of links around the plaquette, P_{\mu\nu}(x)
 ###   * beta = 6 / g^2
 def fn_eval_point_S(U, t, x, y, z, beta, u0 = 1.):
-    tmp = 0.
-    for mu in range(1, 4):  #sum over \mu > \nu spacetime dimensions
-        for nu in range(mu):
-            tmp += ( 1. - np.real(np.trace( fn_plaquette(U, t, x, y, z, mu, nu) )) / 3. / u0**4 )
-    return beta * tmp
+  tmp = 0.
+  for mu in range(1, 4):  #sum over \mu > \nu spacetime dimensions
+    for nu in range(mu):
+      tmp += ( 1. - np.real(np.trace( fn_plaquette(U, t, x, y, z, mu, nu) )) / 3. / u0**4 )
+  return beta * tmp
 
 ### Calculate density for given operator.
 ### Requires lattice and operator to calculate along with all arguments that need to be passed to operator.
 def fn_operator_density(U, operator_function, *args):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    tmp = [[[[0 for z in range(Nz)] for y in range(Ny)] for x in range(Nx)] for t in range(Nt)]
-    for t in range(Nt):
-        for x in range(Nx):
-            for y in range(Ny):
-                for z in range(Nz):
-                    tmp[t][x][y][z] = operator_function(U, t, x, y, z, *args)
-    return tmp
-
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  tmp = [[[[0 for z in range(Nz)] for y in range(Ny)] for x in range(Nx)] for t in range(Nt)]
+  for t in range(Nt):
+    for x in range(Nx):
+      for y in range(Ny):
+        for z in range(Nz):
+          tmp[t][x][y][z] = operator_function(U, t, x, y, z, *args)
+  return tmp
 
 ### Calculate sum for given operator over whole lattice.
 ### Requires lattice and operator to calculate along with all arguments that need to be passed to operator.
 def fn_sum_over_lattice(U, operator_function, *args):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    sum_lattice = 0.
-    for t in range(Nt):
-        for x in range(Nx):
-            for y in range(Ny):
-                for z in range(Nz):
-                    sum_lattice += operator_function(U, t, x, y, z, *args)
-    return sum_lattice
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  sum_lattice = 0.
+  for t in range(Nt):
+    for x in range(Nx):
+      for y in range(Ny):
+        for z in range(Nz):
+          sum_lattice += operator_function(U, t, x, y, z, *args)
+  return sum_lattice
 
 ### Planar Wilson loop with one dimension in time
 def fn_wilson(U, t, x, y, z, mu, R, T):  #mu spatial
-    #Imagine 2D loop as ABCD where A, B, C, D are edges. Split to two lines:
-    #lower that consists of A*B edges
-    #upper that consists of C*D edges
-    #need to compute specific coordinate points where each line starts.
-    if mu == 0:
-        print("Wilson loop RT can not be in time direction.")
-        exit()
+  #Imagine 2D loop as ABCD where A, B, C, D are edges. Split to two lines:
+  #lower that consists of A*B edges
+  #upper that consists of C*D edges
+  #need to compute specific coordinate points where each line starts.
+  if mu == 0:
+    print("Wilson loop RT can not be in time direction.")
+    exit()
     
-    #need start of edge A and start of edge C. start of the two wilson lines
-    pointA = [t, x, y, z] 
-    pointC = [t, x, y, z]
-    pointC[0] += T
-    pointC[mu] += R
-    lower = 1. + 0. * 1J
-    upper = 1. + 0. * 1J
-    #multiply in correct order
-    for nt in range(T):
-        lower, pointA = fn_line_move_forward(U, lower, pointA, 0)
-        upper, pointC = fn_line_move_backward(U, upper, pointC, 0)
-    for nx in range(R):
-        lower, pointA = fn_line_move_forward(U, lower, pointA, mu)
-        upper, pointC = fn_line_move_backward(U,upper,  pointC, mu)
-    result = np.dot(lower, upper)
-    return np.trace(result).real / 3.
+  #need start of edge A and start of edge C. start of the two wilson lines
+  pointA = [t, x, y, z]
+  pointC = [t, x, y, z]
+  pointC[0] += T
+  pointC[mu] += R
+  lower = 1. + 0. * 1J
+  upper = 1. + 0. * 1J
+  #multiply in correct order
+  for nt in range(T):
+    lower, pointA = fn_line_move_forward(U, lower, pointA, 0)
+    upper, pointC = fn_line_move_backward(U, upper, pointC, 0)
+  for nx in range(R):
+    lower, pointA = fn_line_move_forward(U, lower, pointA, mu)
+    upper, pointC = fn_line_move_backward(U,upper,  pointC, mu)
+  result = np.dot(lower, upper)
+  return np.trace(result).real / 3.
 
 ### average of Wilson loop
 def fn_wilson_average(U, R, T):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    sum_wilson = 0. + 0. * 1J
-    for t in range(Nt):
-        for x in range(Nx):
-            for y in range(Ny):
-                for z in range(Nz):
-                    for direc in range(1, 4):
-                        sum_wilson += fn_wilson(U, t,x,y,z, direc, R, T)
-    return sum_wilson / Nx / Ny / Nz / Nt / 3.
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  sum_wilson = 0. + 0. * 1J
+  for t in range(Nt):
+    for x in range(Nx):
+      for y in range(Ny):
+        for z in range(Nz):
+          for direc in range(1, 4):
+            sum_wilson += fn_wilson(U, t,x,y,z, direc, R, T)
+  return sum_wilson / Nx / Ny / Nz / Nt / 3.
 
 ### Wilson at a specific R.
 ### could be calculated with wilson operator as well
 ### clearer to have this option too
 def fn_wilson_loops_at_r(U, R):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    wilson_loops = []
-    for T in range(Nt):
-        tmp = fn_wilson_average(U, R, T)
-        wilson_loops.append(tmp)
-    return wilson_loops
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  wilson_loops = []
+  for T in range(Nt):
+    tmp = fn_wilson_average(U, R, T)
+    wilson_loops.append(tmp)
+  return wilson_loops
 
 ### non planar Wilson loop -> needed to get intermediate values of potential
 def fn_nonplanar_wilson(U, t, x, y, z, mu, R, rho, S, T):
-    #imagine non planar loop in 3D as ABCDEF where A, B, C, D, E, F are the EDGES
-    #need to calculate all edges and then multiply in order A*B*C*D*E*F to get correct result
-    #need to determine specific coordinate points where loop starts
-    if mu == 0 or rho == 0:
-        print("Non planar Wilson loop RST can not be in time direction.")
-        exit()
-    if mu == rho:
-        print("Non planar Wilson loop RST can not have same spatial directions R, S.")
-        exit()
+  #imagine non planar loop in 3D as ABCDEF where A, B, C, D, E, F are the EDGES
+  #need to calculate all edges and then multiply in order A*B*C*D*E*F to get correct result
+  #need to determine specific coordinate points where loop starts
+  if mu == 0 or rho == 0:
+    print("Non planar Wilson loop RST can not be in time direction.")
+    exit()
+  if mu == rho:
+    print("Non planar Wilson loop RST can not have same spatial directions R, S.")
+    exit()
 
-    #Starting points for each edge. pointA for edge A etc
-    pointA = [t,x,y,z]
-    
-    pointB = [t,x,y,z]
-    pointB[0] += T
-    
-    pointC = [t,x,y,z]
-    pointC[0] += T
-    pointC[mu] += R
+  #Starting points for each edge. pointA for edge A etc
+  pointA = [t,x,y,z]
+  
+  pointB = [t,x,y,z]
+  pointB[0] += T
+  
+  pointC = [t,x,y,z]
+  pointC[0] += T
+  pointC[mu] += R
 
-    pointD = [t,x,y,z]
-    pointD[0] += T
-    pointD[mu] += R
-    pointD[rho] += S
+  pointD = [t,x,y,z]
+  pointD[0] += T
+  pointD[mu] += R
+  pointD[rho] += S
 
-    pointE = [t,x,y,z]
-    pointE[mu] += R
-    pointE[rho] += S
+  pointE = [t,x,y,z]
+  pointE[mu] += R
+  pointE[rho] += S
 
-    pointF = [t,x,y,z]
-    pointF[mu] += R
+  pointF = [t,x,y,z]
+  pointF[mu] += R
 
-    edgeA, edgeB, edgeC, edgeD, edgeE, edgeF = 1., 1., 1., 1., 1., 1.
-    for nt in range(T):
-        edgeA, pointA = fn_line_move_forward(U, edgeA, pointA, 0)
-        edgeD, pointD = fn_line_move_backward(U, edgeD, pointD, 0)
-    
-    for nr in range(R):
-        edgeB, pointB = fn_line_move_forward(U, edgeB, pointB, mu)
-        edgeF, pointF = fn_line_move_backward(U, edgeF, pointF,mu )
+  edgeA, edgeB, edgeC, edgeD, edgeE, edgeF = 1., 1., 1., 1., 1., 1.
+  for nt in range(T):
+    edgeA, pointA = fn_line_move_forward(U, edgeA, pointA, 0)
+    edgeD, pointD = fn_line_move_backward(U, edgeD, pointD, 0)
+  
+  for nr in range(R):
+    edgeB, pointB = fn_line_move_forward(U, edgeB, pointB, mu)
+    edgeF, pointF = fn_line_move_backward(U, edgeF, pointF,mu )
 
-    for ns in range(S):
-        edgeC, pointC = fn_line_move_forward(U, edgeC, pointC, rho)
-        edgeE, pointE = fn_line_move_backward(U, edgeE, pointE,rho )
+  for ns in range(S):
+    edgeC, pointC = fn_line_move_forward(U, edgeC, pointC, rho)
+    edgeE, pointE = fn_line_move_backward(U, edgeE, pointE,rho )
 
-    #create full loop -> careful order required
-    loop = np.dot(np.dot(np.dot(np.dot(np.dot(edgeA,
-                                              edgeB),
-                                              edgeC),
-                                              edgeD),
-                                              edgeE),
-                                              edgeF)
-    return np.trace(loop).real / 3.
+  #create full loop -> careful order required
+  loop = np.dot(np.dot(np.dot(np.dot(np.dot(edgeA,
+                                            edgeB),
+                                            edgeC),
+                                            edgeD),
+                                            edgeE),
+                                            edgeF)
+  return np.trace(loop).real / 3.
 
 ### same as Wilson for nonplanar
 def fn_nonplanar_wilson_average(U, R, S, T):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    sum_wilson = 0.
-    count = 0 #for averaging
-    for t in range(Nt):
-        for x in range(Nx):
-            for y in range(Ny):
-                for z in range(Nz):
-                    for mu in range(1, 4): #can not pass time in wilson R, T loop
-                        for rho in range(1, 4):
-                            if mu != rho:
-                                sum_wilson += fn_nonplanar_wilson(U, t,x,y,z, mu, R, rho, S,  T)
-                                count += 1
-    return sum_wilson / float(count)
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  sum_wilson = 0.
+  count = 0 #for averaging
+  for t in range(Nt):
+    for x in range(Nx):
+      for y in range(Ny):
+        for z in range(Nz):
+          for mu in range(1, 4): #can not pass time in wilson R, T loop
+            for rho in range(1, 4):
+              if mu != rho:
+                sum_wilson += fn_nonplanar_wilson(U, t,x,y,z, mu, R, rho, S,  T)
+                count += 1
+  return sum_wilson / float(count)
 
 #same as wilson for nonplanar
 def fn_nonplanar_wilson_loops_at_r(U, R, S):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    wilson_loops = []
-    for T in range(Nt):
-        tmp = fn_nonplanar_wilson_average(U, R, S, T)
-        wilson_loops.append(tmp)
-    return wilson_loops
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  wilson_loops = []
+  for T in range(Nt):
+    tmp = fn_nonplanar_wilson_average(U, R, S, T)
+    wilson_loops.append(tmp)
+  return wilson_loops
 
 ### Polyakov loop 
 def fn_polyakov(U):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    ans = 0.
-    for x in range(Nx):
-        for y in range(Ny):
-            for z in range(Nz):
-                p = U[0][x][y][z][0]
-                for t in range(1,Nt):
-                    p = np.dot(p, U[t][x][y][z][0])
-                ans  = np.add(ans, np.trace(p))
-    return ans / Nx / Ny / Nz 
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  ans = 0.
+  for x in range(Nx):
+    for y in range(Ny):
+      for z in range(Nz):
+        p = U[0][x][y][z][0]
+        for t in range(1,Nt):
+          p = np.dot(p, U[t][x][y][z][0])
+        ans  = np.add(ans, np.trace(p))
+  return ans / Nx / Ny / Nz
 
 ### Polyakov density
 def fn_polyakov_atpoint(U, x, y, z):
-    Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-    line = 1.
-    for t in range(Nt):
-        line = np.dot(line, U[t][x][y][z][0])
-    return np.trace(line)
+  Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
+  line = 1.
+  for t in range(Nt):
+    line = np.dot(line, U[t][x][y][z][0])
+  return np.trace(line)
 
 ### topological charge density
-def fn_topological_charge(U, t, x, y, z):
-    # get the field strength
-    F01 = fn_F_munu(U, t, x, y, z, 0, 1)
-    F02 = fn_F_munu(U, t, x, y, z, 0, 2)
-    F03 = fn_F_munu(U, t, x, y, z, 0, 3)
-    F12 = fn_F_munu(U, t, x, y, z, 1, 2)
-    F13 = fn_F_munu(U, t, x, y, z, 1, 3)
-    F23 = fn_F_munu(U, t, x, y, z, 2, 3)
-    # build the contraction, epsilon_abcd tr( F_ab F_cd )
-    result = 8. * ( np.trace( np.dot(F01, F23) ) - np.trace( np.dot(F02, F13) ) + np.trace( np.dot(F03, F12) ) )
-    return result / ( 32. * np.pi**2 )
+def fn_topological_charge(U, t, x, y, z, ver='clov'):
+  # get the field strength
+  F01 = fn_F_munu(U, t, x, y, z, 0, 1, ver)
+  F02 = fn_F_munu(U, t, x, y, z, 0, 2, ver)
+  F03 = fn_F_munu(U, t, x, y, z, 0, 3, ver)
+  F12 = fn_F_munu(U, t, x, y, z, 1, 2, ver)
+  F13 = fn_F_munu(U, t, x, y, z, 1, 3, ver)
+  F23 = fn_F_munu(U, t, x, y, z, 2, 3, ver)
+  # build the contraction, epsilon_abcd tr( F_ab F_cd )
+  result = 8. * ( np.trace( np.dot(F01, F23) ) - np.trace( np.dot(F02, F13) ) + np.trace( np.dot(F03, F12) ) )
+  return result / ( 32. * np.pi**2 )
 
-### antihermitian, traceless version of field strength
-def fn_F_munu(U, t, x, y, z, mu, nu):
-    # build Wilson loop from plaquette
-    #W = fn_plaquette(U, t, x, y, z, mu, nu)
-    # alternatively, and better, build it from clover
+### antihermitian, traceless version of field strength, O(a^2) errors
+def fn_F_munu(U, t, x, y, z, mu, nu, ver='c'):
+  # build Wilson loop from plaquette
+  if ver == 'p':
+    W = fn_plaquette(U, t, x, y, z, mu, nu)
+  # alternatively, and better, build it from clover, suppressed O(a^2) errors
+  elif ver == 'c':
     W = fn_clover(U, t, x, y, z, mu, nu)
-    # pick off the field strength
-    W_H = np.subtract(W, W.conj().T)
-    # make it traceless
-    W_imp = W_H - np.trace(W_H) * np.eye(3, dtype=complex) / 3.
-    # pick off imaginary part
-    return -0.5J * W_imp
+  # alternatively, and better still, build from clover and rectangle, O(a^4) errors
+  elif ver == 'cr':
+    # see, e.g., arXiv:1708.00696 for construction and Symanzik improvement coefficients b0, b1
+    # note factor of 2 for rectangle per eq. (23) of arXiv:1708.00696
+    b0, b1 = 5./3.,  -1./12.
+    W = b0 * fn_clover(U, t, x, y, z, mu, nu) + b1 * 2. * fn_rectangle(U, t, x, y, z, mu, nu)
+  # pick off the field strength
+  W_H = np.subtract(W, W.conj().T)
+  # make it traceless
+  W_imp = W_H - np.trace(W_H) * np.eye(3, dtype=complex) / 3.
+  # pick off imaginary part
+  return -0.5J * W_imp
 
 
 #-------------Generation code -------------------

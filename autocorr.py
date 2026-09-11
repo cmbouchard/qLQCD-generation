@@ -4,21 +4,21 @@ homepath = '/Users/cmb/Documents/gauge_fields/qLQCD-generation/'
 
 ### specify data
 Nstart = 0
-Nend = 5000
-Nt = 4
-Nx = 4
-Ny = 4
-Nz = 4
+Nend = 2500
+Nt = 20
+Nx = 10
+Ny = 10
+Nz = 10
 action = 'W'
 beta = 5.70
 
 ### configurations to analyze
-Nstart_analysis = 1000
-Nend_analysis = 5000
+Nstart_analysis = 600
+Nend_analysis = 2500
 
 
 ### set threshold for autocorrelation function
-threshold = 0.01
+threshold = 0.1
 
 ### point to data file, e.g., S_v_cfg_570_4x4x4x4_W_10000-19998.dat
 dfile = homepath + 'S_v_cfg_' + str(int(beta * 100)) + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_' + action + '_' + str(Nstart) + '-' + str(Nend) + '.dat'
@@ -27,7 +27,7 @@ data = np.loadtxt(dfile, usecols=1, skiprows=1)
 
 ### Name output file
 #Nend_analysis = len(data) * Nskip
-fstring_out = str(beta * 100) + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_' + action + '_' + str(Nstart_analysis) + '-' + str(Nend_analysis) + '.dat'
+fstring_out = str(int(beta * 100)) + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_' + action + '_' + str(Nstart_analysis) + '-' + str(Nend_analysis) + '.dat'
 
 ### Calculate autocorrelation function (ACF)
 acf = np.correlate(data - np.mean(data), data - np.mean(data), mode='full')

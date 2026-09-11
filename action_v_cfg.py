@@ -6,12 +6,12 @@ import params
 import gauge_latticeqcd as gl
 
 ### Script to calculate the evolution of the action as a function of Monte Carlo time
-Nstart = 0
-Nend = 5000
-Nt = 4
-Nx = 4
-Ny = 4
-Nz = 4
+Nstart = 2000
+Nend = 2500
+Nt = 20
+Nx = 10
+Ny = 10
+Nz = 10
 action = 'W'
 beta = 5.70
 
