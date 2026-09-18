@@ -3,7 +3,11 @@ ver 6
 Chris Bouchard
 
 * python script to generate quenched lattice QCD gauge fields
-* user interface via generate.py
+* user interface via generate.py, run as e.g.:
+    python generate.py --action WR_T --beta 5.7 --Nt 20 --Nx 10 --Ny 10 --Nz 10 --Ncfg 602
+  run `python generate.py --help` for the full list of flags and their defaults (which
+  reproduce the settings this README describes below, so `python generate.py` with no
+  flags at all is a valid, if minimal, cold-start run)
   - specify action (W = Wilson, WR = Wilson with rectangle improvement)
   - to tadpole improve, add "_T" to end of action
   - while tadpole improving, u0 is initialized to the value of the u0 parameter (1 for a
@@ -11,11 +15,11 @@ Chris Bouchard
     (controlled by Nu0_step, Nu0_avg) and used in the Metropolis updates from then on;
     watch the printed "u0 progression" to see when it has stabilised
   - to freeze u0 once stabilised (production/measurement phase), continue the run with
-    the same action string, the u0 parameter set to the stabilised value, and freeze_u0
-    set to True, so it is never recalculated again regardless of Nu0_step/Ncfg; do not
-    drop the "_T" suffix mid-chain, since the action string also names the output
-    directory and switching it will make generate.py look for the previous configuration
-    in the wrong place
+    the same --action string, --u0 set to the stabilised value, and --freeze-u0 passed,
+    so it is never recalculated again regardless of Nu0_step/Ncfg; do not drop the "_T"
+    suffix mid-chain, since the action string also names the output directory and
+    switching it will make generate.py look for the previous configuration in the wrong
+    place
   - each configuration's u0 (the value actually used to generate it) is logged to
     <dir_name>/u0_<dir_name>.dat as it is saved, and is read back automatically by
     action_v_cfg.py via lattice_collection.fn_load_u0_log(); this is required to get a
