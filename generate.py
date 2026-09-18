@@ -1,51 +1,72 @@
 ### Script to generate quenched Wilson gauge fields, with the option of tadpole- and Symanzik-improvement.
 ### Modified to include multiprocessing based on Panagiotis's script.
 from __future__ import print_function
-import os, sys, string
-import numpy as np
+import argparse
+import os
 from gauge_latticeqcd import *
-import lattice_collection as lc
-#from multiprocessing import Pool
-#import functools
 
-### settings
-#Nt, Nx, Ny, Nz = 20, 10, 10, 10
-Nt, Nx, Ny, Nz = 6, 6, 6, 6
 
-startcfg = 0     # cold start (0) or existing cfg number to resume Markov chain from
-Ncfg = 2002        # number of lattices to generate (add 2 to the number you actually want)
-action = 'WR_T'       # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
-betas = [5.7]      # beta values to be generated, beta = 6/g^2
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate quenched Wilson gauge field configurations, with optional "
+                     "rectangle (Symanzik) and/or tadpole improvement.")
 
-Nhits = 10         # hits between each update
-epsilon = 0.3      # how "far" away from identity the updates will be; adjust for 20-50% acceptance
-                   # for b=5.7, 8^4, 0.2 -> 50%; 0.25 -> 42%; 0.3 -> 34%
-threads = 1        # threads used in multiprocessing
+    lat = parser.add_argument_group("lattice geometry")
+    lat.add_argument("--Nt", type=int, default=6, help="temporal extent (default: 6)")
+    lat.add_argument("--Nx", type=int, default=6, help="spatial extent, x (default: 6)")
+    lat.add_argument("--Ny", type=int, default=6, help="spatial extent, y (default: 6)")
+    lat.add_argument("--Nz", type=int, default=6, help="spatial extent, z (default: 6)")
 
-### for tadpole improvement, else ignore
-Nu0_step = 1       # number of cfgs to skip between calculating u0
-Nu0_avg = 25        # number of u0 values to average together before updating
-u0 = 1.            # u0 = <W11>^(1/4); for cold start 1, if continuing from existing lattice, adjust to that value
-freeze_u0 = False  # once u0 has stabilised, set True (keeping the same "_T" action name and
-                   # u0 set to the stabilised value) to stop recalculating u0 for production,
-                   # without switching action or reasoning about Nu0_step relative to Ncfg
+    chain = parser.add_argument_group("Markov chain")
+    chain.add_argument("--startcfg", type=int, default=0,
+                        help="cold start (0) or existing cfg number to resume the Markov chain "
+                             "from (default: 0)")
+    chain.add_argument("--Ncfg", type=int, default=2002,
+                        help="number of lattices to generate; add 2 to the number you actually "
+                             "want (default: 2002)")
+    chain.add_argument("--action", choices=["W", "WR", "W_T", "WR_T"], default="WR_T",
+                        help="W = Wilson, WR = Wilson with rectangle improvement; append _T to "
+                             "either for tadpole improvement (default: WR_T)")
+    chain.add_argument("--beta", type=float, default=5.7, help="beta = 6/g^2 (default: 5.7)")
+    chain.add_argument("--Nhits", type=int, default=10, help="hits between each update (default: 10)")
+    chain.add_argument("--epsilon", type=float, default=0.3,
+                        help="how far from identity each update matrix is; tune for a 20-50%% "
+                             "acceptance ratio, e.g. for beta=5.7, 8^4: 0.2 -> 50%%, 0.25 -> 42%%, "
+                             "0.3 -> 34%% (default: 0.3)")
 
-### generate lattices
-for b in betas:
+    tad = parser.add_argument_group("tadpole improvement (ignored unless --action ends in _T)")
+    tad.add_argument("--Nu0_step", type=int, default=1,
+                      help="number of cfgs to skip between calculating u0 (default: 1)")
+    tad.add_argument("--Nu0_avg", type=int, default=25,
+                      help="number of u0 values to average together before updating (default: 25)")
+    tad.add_argument("--u0", type=float, default=1.,
+                      help="u0 = <W11>^(1/4); 1 for a cold start, or the value to continue an "
+                           "existing lattice from (default: 1.0)")
+    tad.add_argument("--freeze-u0", dest="freeze_u0", action="store_true",
+                      help="once u0 has stabilised, pass this (with --u0 set to the stabilised "
+                           "value, the same --action, and --startcfg continuing the chain) to "
+                           "stop recalculating u0 for the production run")
 
-    dir_name = action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(b * 100))
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    dir_name = (args.action + '_' + str(args.Nt) + 'x' + str(args.Nx) + 'x' + str(args.Ny) + 'x'
+                + str(args.Nz) + '_b' + str(int(args.beta * 100)))
 
     ### create output directory if it does not exist
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
     else:
-        print("Directory exists for beta ", b)
+        print("Directory exists for beta ", args.beta)
 
-    generate(beta=b, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg, freeze_u0=freeze_u0)
+    generate(beta=args.beta, u0=args.u0, action=args.action, Nt=args.Nt, Nx=args.Nx, Ny=args.Ny,
+             Nz=args.Nz, startcfg=args.startcfg, Ncfg=args.Ncfg, Nhits=args.Nhits,
+             epsilon=args.epsilon, Nu0_step=args.Nu0_step, Nu0_avg=args.Nu0_avg,
+             freeze_u0=args.freeze_u0)
 
-### initialize multiprocessing
-#p = Pool(threads)
-### function to be calculated needs to use functools to work with map
-#func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg, freeze_u0=freeze_u0)
-#p.map(func, betas) # call multiprocessing map function
-#p.terminate()      # terminate multiprocessing
+
+if __name__ == "__main__":
+    main()
