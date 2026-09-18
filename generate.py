@@ -12,8 +12,8 @@ import lattice_collection as lc
 #Nt, Nx, Ny, Nz = 20, 10, 10, 10
 Nt, Nx, Ny, Nz = 6, 6, 6, 6
 
-startcfg = 1000     # cold start (0) or existing cfg number to resume Markov chain from
-Ncfg = 1002        # number of lattices to generate (add 2 to the number you actually want)
+startcfg = 0     # cold start (0) or existing cfg number to resume Markov chain from
+Ncfg = 2002        # number of lattices to generate (add 2 to the number you actually want)
 action = 'WR_T'       # W = Wilson, Wilson with rectangle improvements, W_T and WR_T = With tadpole improvement
 betas = [5.7]      # beta values to be generated, beta = 6/g^2
 
@@ -23,9 +23,9 @@ epsilon = 0.3      # how "far" away from identity the updates will be; adjust fo
 threads = 1        # threads used in multiprocessing
 
 ### for tadpole improvement, else ignore
-Nu0_step = 5       # number of cfgs to skip between calculating u0
-Nu0_avg = 10        # number of u0 values to average together before updating
-u0 = 0.8360413358070623  #1.            # u0 = <W11>^(1/4); for cold start 1, if continuing from existing lattice, adjust to that value
+Nu0_step = 1       # number of cfgs to skip between calculating u0
+Nu0_avg = 25        # number of u0 values to average together before updating
+u0 = 1.            # u0 = <W11>^(1/4); for cold start 1, if continuing from existing lattice, adjust to that value
 
 ### generate lattices
 for b in betas:
