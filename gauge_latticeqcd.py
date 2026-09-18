@@ -1,6 +1,7 @@
 from __future__ import print_function
 import numba
 import numpy as np
+import os
 import sys
 import lattice_collection as lc
 import tools_v1 as tool
@@ -726,7 +727,14 @@ class lattice():
         matrices_length = len(matrices)
         if save_name:
             output = save_name + '/link_' + save_name + '_'
-        
+            ### log of u0 actually used to generate each saved configuration, so that
+            ### post-processing (e.g. action_v_cfg.py) can reproduce the tadpole-improved
+            ### action correctly instead of assuming u0 = 1.
+            u0_log_path = save_name + '/u0_' + save_name + '.dat'
+            if not os.path.exists(u0_log_path):
+                with open(u0_log_path, 'w') as u0_log:
+                    u0_log.write('#1:cfg  2:u0\n')
+
         #if tadpole improving, initialize list of u0 values
         if  action[-1:] == 'T':
             plaquette = []
@@ -735,6 +743,10 @@ class lattice():
         ### loop through number of configurations to be generated
         for i in range(Ncfg - 1):
             print('starting sweep ' + str(i) + ':  ' + str(datetime.datetime.now()))
+
+            ### u0 in effect for this sweep, i.e. the value that will actually be baked
+            ### into the links saved below (captured before any update further down)
+            u0_this_sweep = self.u0
 
             ### loop through spacetime dimensions
             for t in range(self.Nt):
@@ -788,6 +800,8 @@ class lattice():
                 output_idx = output + str(int( idx ))
                 file_out = open(output_idx, 'wb')
                 np.save(file_out, self.U)  #NOTE: np.save without opening first appends .npy
+                with open(u0_log_path, 'a') as u0_log:
+                    u0_log.write(str(int(idx)) + ' ' + str(u0_this_sweep) + '\n')
                 sys.stdout.flush()
         
         ratio_accept = float(ratio_accept) / Ncfg / self.Nx / self.Ny / self.Nz / self.Nt / 4. / Nhits

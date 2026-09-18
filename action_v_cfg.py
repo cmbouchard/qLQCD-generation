@@ -4,6 +4,7 @@ import numpy as np
 import tools_v1 as tool
 import params
 import gauge_latticeqcd as gl
+import lattice_collection as lc
 
 ### Script to calculate the evolution of the action as a function of Monte Carlo time
 Nstart = 0
@@ -12,13 +13,15 @@ Nend = 2000
 Nt, Nx, Ny, Nz = 6, 6, 6, 6
 action = 'WR_T'
 beta = 5.7
-u0 = 0.8350482079141565  #value from end of Markov chain 0-2000
 
-#u0file = 'u0_W_T_5x5x5x5_b600'
-#u0file = None
-#if u0file != None:
-#    import u0_W_T_5x5x5x5_b600 as ti
-#    u0LIST = ti.u0
+### if the ensemble was generated with tadpole improvement (action ending in "_T"),
+### load the per-configuration u0 log written by gauge_latticeqcd.py during generation
+### so that the action is evaluated with the same u0 that was actually used to
+### generate each configuration. Non-tadpole ensembles have no u0 log and use u0 = 1.
+if action[-2:] == '_T':
+    u0_of_cfg = lc.fn_load_u0_log(action, Nt, Nx, Ny, Nz, beta, "./")
+else:
+    u0_of_cfg = None
 
 def calc_S_QCD(U, u0=1.):
     Nt = len(U)
@@ -57,11 +60,8 @@ for Ncfg in range(Nstart, Nend + 1):
     ### load lattice data
     U = np.load(U_infile + str(Ncfg))
 
-    ### collect tadpole improvement values
-    #if u0file != None:
-    #    u0 = u0LIST[int(Ncfg/10)]
-    #else:
-    #    u0 = 1.
+    ### use the u0 that was actually used to generate this configuration
+    u0 = u0_of_cfg[Ncfg] if u0_of_cfg is not None else 1.
 
     ### calculate action
     S_QCD = calc_S_QCD(U, u0)
