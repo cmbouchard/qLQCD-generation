@@ -418,8 +418,8 @@ def fn_F_munu(U, t, x, y, z, mu, nu, ver='c'):
 
 #-------------Generation code -------------------
 ### function called by generate script
-def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, Nu0_step='', Nu0_avg=10):
-    
+def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, Nu0_step='', Nu0_avg=10, freeze_u0=False):
+
     ### loop over (t,x,y,z) and mu and set initial collection of links
     ### Either:
     ###  1. initialize to warm start by using random collection of SU(3) links, or
@@ -450,7 +450,7 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, N
     
     print('Continuing from cfg: ', startcfg)
     print('... generating lattices')
-    acceptance = U.markov_chain_sweep(Ncfg, epsilon, startcfg, name, Nhits, action, Nu0_step, Nu0_avg)
+    acceptance = U.markov_chain_sweep(Ncfg, epsilon, startcfg, name, Nhits, action, Nu0_step, Nu0_avg, freeze_u0)
     print("acceptance:", acceptance)
 
 ### Generate SU(2) matrix as described in Gattringer & Lang
@@ -713,7 +713,11 @@ class lattice():
     ###   hits per sweep,
     ###   action-> W for Wilson or WR for Wilson with rectangles
     ###            W_T or WR_T for tadpole improvement
-    def markov_chain_sweep(self, Ncfg, epsilon, initial_cfg=0, save_name='', Nhits=10, action='W', Nu0_step='', Nu0_avg=10):
+    ###   freeze_u0 -> once thermalization has stabilised u0, set this True (keeping the
+    ###            same "_T" action name and startcfg continuing the same chain/directory)
+    ###            to stop recalculating u0 for the production run, without needing to
+    ###            reason about Nu0_step relative to Ncfg
+    def markov_chain_sweep(self, Ncfg, epsilon, initial_cfg=0, save_name='', Nhits=10, action='W', Nu0_step='', Nu0_avg=10, freeze_u0=False):
         ratio_accept = 0.
         if save_name:
             output = save_name + '/link_' + save_name + '_'
@@ -777,10 +781,10 @@ class lattice():
                                         ratio_accept += 1
                                         
 
-            ### Update u0. For better performance, skip every Nu0_step cfgs and append plaquettes to array. 
+            ### Update u0. For better performance, skip every Nu0_step cfgs and append plaquettes to array.
             ### When the array reaches size Nu0_avg, average to update u0.
-            ### Wait 10 iterations from warm start.
-            if action[-1:] == 'T' and (i % Nu0_step == 0) and i > 10:
+            ### Wait 10 iterations from warm start. Skipped entirely once frozen.
+            if action[-1:] == 'T' and not freeze_u0 and (i % Nu0_step == 0) and i > 10:
                 plaquette.append( self.average_plaquette() )
                 if len(plaquette) == Nu0_avg:
                     u0_prime = ( np.mean( plaquette ) )**0.25

@@ -26,23 +26,26 @@ threads = 1        # threads used in multiprocessing
 Nu0_step = 5       # number of cfgs to skip between calculating u0
 Nu0_avg = 10        # number of u0 values to average together before updating
 u0 = 0.8360413358070623  #1.            # u0 = <W11>^(1/4); for cold start 1, if continuing from existing lattice, adjust to that value
+freeze_u0 = False  # once u0 has stabilised, set True (keeping the same "_T" action name and
+                   # u0 set to the stabilised value) to stop recalculating u0 for production,
+                   # without switching action or reasoning about Nu0_step relative to Ncfg
 
 ### generate lattices
 for b in betas:
 
     dir_name = action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(b * 100))
-    
+
     ### create output directory if it does not exist
     if not os.path.exists(dir_name):
-        os.mkdir(dir_name) 
+        os.mkdir(dir_name)
     else:
         print("Directory exists for beta ", b)
 
-    generate(beta=b, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
+    generate(beta=b, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg, freeze_u0=freeze_u0)
 
 ### initialize multiprocessing
 #p = Pool(threads)
 ### function to be calculated needs to use functools to work with map
-#func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
+#func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg, freeze_u0=freeze_u0)
 #p.map(func, betas) # call multiprocessing map function
 #p.terminate()      # terminate multiprocessing

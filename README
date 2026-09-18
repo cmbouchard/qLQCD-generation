@@ -11,10 +11,11 @@ Chris Bouchard
     (controlled by Nu0_step, Nu0_avg) and used in the Metropolis updates from then on;
     watch the printed "u0 progression" to see when it has stabilised
   - to freeze u0 once stabilised (production/measurement phase), continue the run with
-    the same action string, the u0 parameter set to the stabilised value, and Nu0_step
-    set larger than Ncfg so it is never recalculated again; do not drop the "_T" suffix
-    mid-chain, since the action string also names the output directory and switching it
-    will make generate.py look for the previous configuration in the wrong place
+    the same action string, the u0 parameter set to the stabilised value, and freeze_u0
+    set to True, so it is never recalculated again regardless of Nu0_step/Ncfg; do not
+    drop the "_T" suffix mid-chain, since the action string also names the output
+    directory and switching it will make generate.py look for the previous configuration
+    in the wrong place
   - each configuration's u0 (the value actually used to generate it) is logged to
     <dir_name>/u0_<dir_name>.dat as it is saved, and is read back automatically by
     action_v_cfg.py via lattice_collection.fn_load_u0_log(); this is required to get a
