@@ -18,7 +18,6 @@ action = 'WR_T'       # W = Wilson, Wilson with rectangle improvements, W_T and 
 betas = [5.7]      # beta values to be generated, beta = 6/g^2
 
 Nhits = 10         # hits between each update
-Nmatrix = 10000    # number of random SU(3) matrices to be used for updates
 epsilon = 0.3      # how "far" away from identity the updates will be; adjust for 20-50% acceptance
                    # for b=5.7, 8^4, 0.2 -> 50%; 0.25 -> 42%; 0.3 -> 34%
 threads = 1        # threads used in multiprocessing
@@ -39,11 +38,11 @@ for b in betas:
     else:
         print("Directory exists for beta ", b)
 
-    generate(beta=b, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, Nmatrix=Nmatrix, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
+    generate(beta=b, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
 
 ### initialize multiprocessing
 #p = Pool(threads)
 ### function to be calculated needs to use functools to work with map
-#func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, Nmatrix=Nmatrix, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
+#func = functools.partial(generate, u0=u0, action=action, Nt=Nt, Nx=Nx, Ny=Ny, Nz=Nz, startcfg=startcfg, Ncfg=Ncfg, Nhits=Nhits, epsilon=epsilon, Nu0_step=Nu0_step, Nu0_avg=Nu0_avg)
 #p.map(func, betas) # call multiprocessing map function
 #p.terminate()      # terminate multiprocessing

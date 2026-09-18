@@ -3,6 +3,8 @@ import numba
 import numpy as np
 import os
 import sys
+import math
+import random
 import lattice_collection as lc
 import tools_v1 as tool
 import datetime
@@ -416,7 +418,7 @@ def fn_F_munu(U, t, x, y, z, mu, nu, ver='c'):
 
 #-------------Generation code -------------------
 ### function called by generate script
-def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, Nmatrix, epsilon, Nu0_step='', Nu0_avg=10):    
+def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, Nu0_step='', Nu0_avg=10):
     
     ### loop over (t,x,y,z) and mu and set initial collection of links
     ### Either:
@@ -448,60 +450,49 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, Nmatrix, e
     
     print('Continuing from cfg: ', startcfg)
     print('... generating lattices')
-    matrices = create_su3_set(epsilon, Nmatrix)
-    acceptance = U.markov_chain_sweep(Ncfg, matrices, startcfg, name, Nhits, action, Nu0_step, Nu0_avg)
+    acceptance = U.markov_chain_sweep(Ncfg, epsilon, startcfg, name, Nhits, action, Nu0_step, Nu0_avg)
     print("acceptance:", acceptance)
 
 ### Generate SU(2) matrix as described in Gattringer & Lang
+### M = r0*I + i*r1*sigma1 + i*r2*sigma2 + i*r3*sigma3, built directly in closed form
+### (rather than assembling sigma matrices and summing) since this is called on every
+### Metropolis hit. Uses the stdlib random/math modules rather than numpy for the scalar
+### draws and arithmetic: numpy's per-call overhead for a single scalar (as opposed to a
+### batch/array) is 10-70x that of the stdlib equivalents, and that overhead otherwise
+### dominates the runtime here -- the same is true of every other per-hit random draw in
+### markov_chain_sweep (the X vs X^dagger coin flip, the Metropolis accept/reject draw),
+### which is why those use random/math too. NOTE: this means random/math's own RNG stream
+### is used for essentially all of the physics-relevant randomness in a run, separate from
+### numpy's -- if you need a run to be exactly reproducible, seed both
+### (random.seed(...) in addition to np.random.seed(...)); numpy's stream is not otherwise
+### exercised in the hot path.
 def matrix_su2(epsilon = 0.2):
-    ### Pauli matrices
-    sigma1 = np.array([[0, 1], [1, 0]])
-    sigma2 = np.array([[0, -1J], [1J, 0]])
-    sigma3 = np.array([[1, 0], [0, -1]])
-    r = [0., 0., 0., 0.]
-    for i in range(4):
-        r[i] = (np.random.uniform(0, 0.5))
+    r0 = random.uniform(0, 0.5)
+    r1 = random.uniform(0, 0.5)
+    r2 = random.uniform(0, 0.5)
+    r3 = random.uniform(0, 0.5)
     ### normalize
-    norm = np.sqrt(r[1]**2 + r[2]**2 + r[3]**2)
-    r[1:] = map(lambda x: epsilon*x / norm, r[1:])
-    r[0]  = np.sign(r[0]) * np.sqrt(1. - epsilon**2)
-    M = np.identity(2, dtype='complex128')
-    M = M * r[0]
-    M = np.add(1J * r[1] * sigma1, M)
-    M = np.add(1J * r[2] * sigma2, M)
-    M = np.add(1J * r[3] * sigma3, M)
-    return M
+    norm = math.sqrt(r1**2 + r2**2 + r3**2)
+    r1, r2, r3 = epsilon * r1 / norm, epsilon * r2 / norm, epsilon * r3 / norm
+    r0 = math.copysign(math.sqrt(1. - epsilon**2), r0) if r0 != 0. else 0.
+    return np.array([[r0 + 1J * r3, r2 + 1J * r1],
+                      [-r2 + 1J * r1, r0 - 1J * r3]], dtype='complex128')
 
 ### Use SU(2) matrices to generate SU(3) matrix
 ### From Gattringer & Lang's textbook.
-### Need 3 SU(2) matrices for one SU(3) matrix
+### Need 3 SU(2) matrices for one SU(3) matrix.
+### Embeds each 2x2 block directly into its 3x3 identity-with-a-corner-cut-out,
+### rather than building an identity matrix and slice-assigning into it, for the
+### same reason as matrix_su2 above.
 def matrix_su3(epsilon = 0.2):
-    R_su2 = matrix_su2(epsilon)
-    S_su2 = matrix_su2(epsilon)
-    T_su2 = matrix_su2(epsilon)
-    # initialise to identity, need complex numbers from now
-    R = np.identity(3, dtype='complex128')
-    S = np.identity(3, dtype='complex128')
-    T = np.identity(3, dtype='complex128')
-    # upper
-    R[:2,:2] = R_su2
-    # edges
-    S[0:3:2, 0:3:2] = S_su2
-    # lower
-    T[1:,1:] = T_su2
-    # create final matrix
-    X = np.dot(R, S)
-    return np.dot(X, T)
+    R2 = matrix_su2(epsilon)
+    S2 = matrix_su2(epsilon)
+    T2 = matrix_su2(epsilon)
+    R = np.array([[R2[0, 0], R2[0, 1], 0], [R2[1, 0], R2[1, 1], 0], [0, 0, 1]], dtype='complex128')
+    S = np.array([[S2[0, 0], 0, S2[0, 1]], [0, 1, 0], [S2[1, 0], 0, S2[1, 1]]], dtype='complex128')
+    T = np.array([[1, 0, 0], [0, T2[0, 0], T2[0, 1]], [0, T2[1, 0], T2[1, 1]]], dtype='complex128')
+    return R.dot(S).dot(T)
 
-### Create set of SU(3) matrices
-### Needs to be large enough to cover SU(3)
-def create_su3_set(epsilon = 0.2, tot = 1000):
-    matrices = []
-    for i in range(tot):
-        X = matrix_su3(epsilon)
-        matrices.append(X)
-        matrices.append(X.conj().T)
-    return matrices
 
 
 ### LATTICE CLASS
@@ -714,17 +705,16 @@ class lattice():
         return np.trace(res).real / 3. / Nt/ Nx / Ny / Nz / 6.
     
     
-    ### Markov chain sweep. Requires: 
+    ### Markov chain sweep. Requires:
     ###   number of cfgs,
-    ###   set of matrices to generate update,
+    ###   epsilon, step size for the random SU(3) update matrices (drawn fresh per hit),
     ###   initial cfg,
     ###   save name (if given, otherwise will not save),
     ###   hits per sweep,
     ###   action-> W for Wilson or WR for Wilson with rectangles
     ###            W_T or WR_T for tadpole improvement
-    def markov_chain_sweep(self, Ncfg, matrices, initial_cfg=0, save_name='', Nhits=10, action='W', Nu0_step='', Nu0_avg=10):
+    def markov_chain_sweep(self, Ncfg, epsilon, initial_cfg=0, save_name='', Nhits=10, action='W', Nu0_step='', Nu0_avg=10):
         ratio_accept = 0.
-        matrices_length = len(matrices)
         if save_name:
             output = save_name + '/link_' + save_name + '_'
             ### log of u0 actually used to generate each saved configuration, so that
@@ -768,15 +758,21 @@ class lattice():
                                     sys.exit()
                                 ### loop through hits
                                 for j in range( Nhits ):
-                                    ### get a random SU(3) matrix
-                                    r = np.random.randint(0, matrices_length) 
-                                    matrix = matrices[r] 
+                                    ### draw a fresh random SU(3) matrix for this update, and use it or its
+                                    ### conjugate transpose with equal probability. matrix_su3() alone is not
+                                    ### symmetric under X -> X^-1 (its SU(2) building blocks are drawn from a
+                                    ### fixed octant), so this coin flip is required for the proposal to be
+                                    ### reversible (detailed balance) -- it reproduces at the single-hit level
+                                    ### what the old fixed {X, X^dagger} pool did in aggregate.
+                                    matrix = matrix_su3(epsilon)
+                                    if random.getrandbits(1):
+                                        matrix = matrix.conj().T
                                     ### create U'
                                     Uprime = np.dot(matrix, self.U[t, x, y, z, mu, :, :])
                                     ### calculate staple
                                     dS = self.deltaS(self.U[t, x, y, z, mu, :, :], Uprime, A1, A2)
                                     ### check if U' accepted
-                                    if (np.exp(-1. * dS) > np.random.uniform(0, 1)):
+                                    if (math.exp(-1. * dS) > random.random()):
                                         self.U[t, x, y, z, mu, :, :] = Uprime
                                         ratio_accept += 1
                                         

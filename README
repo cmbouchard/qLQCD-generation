@@ -24,6 +24,10 @@ Chris Bouchard
   includes code to update the lattices and perform measurments.
 * incorporates Panagiotis Stylianou's updates to original code including:
   - improved generation of updates via SU(2) matrices
+  - each Metropolis hit draws its own fresh random SU(3) update matrix (rather than
+    drawing from a pre-built pool of Nmatrix matrices), so there is no longer any
+    Nmatrix parameter to size relative to Ncfg/Nhits; the matrix, or its conjugate
+    transpose with equal probability (required for detailed balance), is used each time
   - use of multiprocessing
   - the addition of measurement code for several observables
 * adds calculation of lattice spacing based on beta
