@@ -39,7 +39,23 @@ def fn_load_configuration(action, Nt, Nx, Ny, Nz, beta, cfg, path = ""):
     sys.stdout.flush()
     return U
 
-### HELPER FUNCTION - ONLY TO ALLOW MULTIPROCESSING. 
+### Loads the u0 log written by gauge_latticeqcd.lattice.markov_chain_sweep, mapping
+### each saved configuration number to the u0 value that was actually used to generate it.
+### Returns a dict {cfg: u0}. Raises FileNotFoundError if the ensemble has no u0 log
+### (e.g. it was generated before this logging was added).
+def fn_load_u0_log(action, Nt, Nx, Ny, Nz, beta, path = ""):
+    name = action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100))
+    u0_log_path = path + name + '/u0_' + name + '.dat'
+    u0_of_cfg = {}
+    with open(u0_log_path, 'r') as f:
+        for line in f:
+            if line.startswith('#') or not line.strip():
+                continue
+            cfg_str, u0_str = line.split()
+            u0_of_cfg[int(cfg_str)] = float(u0_str)
+    return u0_of_cfg
+
+### HELPER FUNCTION - ONLY TO ALLOW MULTIPROCESSING.
 ### collects calls function and sends arguments properly
 def helper(args):
     f = args[0]
