@@ -6,20 +6,19 @@ import params
 import gauge_latticeqcd as gl
 
 ### Script to calculate the evolution of the action as a function of Monte Carlo time
-Nstart = 2000
-Nend = 2500
-Nt = 20
-Nx = 10
-Ny = 10
-Nz = 10
-action = 'W'
-beta = 5.70
+Nstart = 0
+Nend = 2000
+
+Nt, Nx, Ny, Nz = 6, 6, 6, 6
+action = 'WR_T'
+beta = 5.7
+u0 = 0.8350482079141565  #value from end of Markov chain 0-2000
 
 #u0file = 'u0_W_T_5x5x5x5_b600'
-u0file = None
-if u0file != None:
-    import u0_W_T_5x5x5x5_b600 as ti
-    u0LIST = ti.u0
+#u0file = None
+#if u0file != None:
+#    import u0_W_T_5x5x5x5_b600 as ti
+#    u0LIST = ti.u0
 
 def calc_S_QCD(U, u0=1.):
     Nt = len(U)
@@ -59,10 +58,10 @@ for Ncfg in range(Nstart, Nend + 1):
     U = np.load(U_infile + str(Ncfg))
 
     ### collect tadpole improvement values
-    if u0file != None:
-        u0 = u0LIST[int(Ncfg/10)]
-    else:
-        u0 = 1.
+    #if u0file != None:
+    #    u0 = u0LIST[int(Ncfg/10)]
+    #else:
+    #    u0 = 1.
 
     ### calculate action
     S_QCD = calc_S_QCD(U, u0)

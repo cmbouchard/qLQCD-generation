@@ -17,7 +17,7 @@ import params
 ### - a bit redundant
 def fn_periodic_link(U, txyz, direction):
   Nt, Nx, Ny, Nz = map(len, [U, U[0], U[0][0], U[0][0][0]])
-  return U[txyz[0] % Nt][txyz[1] % Nx][txyz[2] %Ny][txyz[3] % Nz][direction]
+  return U[txyz[0] % Nt][txyz[1] % Nx][txyz[2] % Ny][txyz[3] % Nz][direction]
 
 def fn_move_forward_link(U, txyz, direction):
   link = fn_periodic_link(U, txyz, direction)
