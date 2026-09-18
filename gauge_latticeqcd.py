@@ -458,10 +458,14 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, N
 ### (rather than assembling sigma matrices and summing) since this is called on every
 ### Metropolis hit. Uses the stdlib random/math modules rather than numpy for the scalar
 ### draws and arithmetic: numpy's per-call overhead for a single scalar (as opposed to a
-### batch/array) is ~10x that of the stdlib equivalents, and that overhead otherwise
-### dominates the runtime here. NOTE: this means random/math's own RNG stream is used for
-### these draws, separate from numpy's -- if you need reproducible runs, seed both
-### (random.seed(...) in addition to np.random.seed(...)).
+### batch/array) is 10-70x that of the stdlib equivalents, and that overhead otherwise
+### dominates the runtime here -- the same is true of every other per-hit random draw in
+### markov_chain_sweep (the X vs X^dagger coin flip, the Metropolis accept/reject draw),
+### which is why those use random/math too. NOTE: this means random/math's own RNG stream
+### is used for essentially all of the physics-relevant randomness in a run, separate from
+### numpy's -- if you need a run to be exactly reproducible, seed both
+### (random.seed(...) in addition to np.random.seed(...)); numpy's stream is not otherwise
+### exercised in the hot path.
 def matrix_su2(epsilon = 0.2):
     r0 = random.uniform(0, 0.5)
     r1 = random.uniform(0, 0.5)
@@ -761,14 +765,14 @@ class lattice():
                                     ### reversible (detailed balance) -- it reproduces at the single-hit level
                                     ### what the old fixed {X, X^dagger} pool did in aggregate.
                                     matrix = matrix_su3(epsilon)
-                                    if np.random.randint(0, 2):
+                                    if random.getrandbits(1):
                                         matrix = matrix.conj().T
                                     ### create U'
                                     Uprime = np.dot(matrix, self.U[t, x, y, z, mu, :, :])
                                     ### calculate staple
                                     dS = self.deltaS(self.U[t, x, y, z, mu, :, :], Uprime, A1, A2)
                                     ### check if U' accepted
-                                    if (np.exp(-1. * dS) > np.random.uniform(0, 1)):
+                                    if (math.exp(-1. * dS) > random.random()):
                                         self.U[t, x, y, z, mu, :, :] = Uprime
                                         ratio_accept += 1
                                         
