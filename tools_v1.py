@@ -8,6 +8,8 @@ from scipy.linalg import expm
 ### * from Necco and Sommer, NPB 622, 328-346 (2002), hep-lat/0108008
 ### * valid for 5.7 <= beta <= 6.92
 ### * valid for Nf = 0 (quenched, ie. no quarks)
+### Only valid for Wilson action, not Luscher-Weisz improved WR.
+### If tadpole improving (ie. W_T), must use beta/u0^4.
 def fn_a(beta):
     return 0.5 * np.exp(-1.6804 - 1.7331 * (beta - 6.) + 0.7849 * (beta - 6.)**2 - 0.4428 * (beta - 6.)**3)
 

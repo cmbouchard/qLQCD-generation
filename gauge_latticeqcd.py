@@ -426,7 +426,6 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, N
     ###  2. read in a previously generated configuration and continue with that Markov chain.
 
     name = action +'_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100))
-    aa = tool.fn_a( beta )
 
     print('simulation parameters:')
     print('      action: ' + action)
@@ -436,10 +435,12 @@ def generate(beta, u0, action, Nt, Nx, Ny, Nz, startcfg, Ncfg, Nhits, epsilon, N
     print('      Nhits = ' + str(Nhits))
     print('      start = ' + str(startcfg))
     print('     sweeps = ' + str(Ncfg))
-    print('          a = ' + str(aa) + ' fm')
-    print('        1/a = ' + str(params.hbarc_GeVfm / aa) + ' GeV')
-    print('        aNx = ' + str(aa * Nx) + ' fm')
-    print('Temperature = ' + str(1000. * params.hbarc_GeVfm / (Nt * aa)) + ' MeV')
+    if action in ['W' or 'W_T']:
+      aa = tool.fn_a( beta / u0**4 )
+      print('          a = ' + str(aa) + ' fm')
+      print('        1/a = ' + str(params.hbarc_GeVfm / aa) + ' GeV')
+      print('        aNx = ' + str(aa * Nx) + ' fm')
+      print('Temperature = ' + str(1000. * params.hbarc_GeVfm / (Nt * aa)) + ' MeV')
 
     if startcfg == 0:
         U = lattice(Nt, Nx, Ny, Nz, beta, u0)
