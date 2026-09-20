@@ -660,9 +660,10 @@ class lattice():
         ### effective forward/backward rectangles
         rectangle_fwd = rectangle1 + rectangle2 + rectangle3 + rectangle4
         rectangle_bwd = rectangle5 + rectangle6
-
-        ans_fwd = (5. * plaquette1 / self.u0**3 / 9.) - (rectangle_fwd / self.u0**5 / 36.)
-        ans_bwd = (5. * plaquette2 / self.u0**3 / 9.) - (rectangle_bwd / self.u0**5 / 36.)
+        ### Overall 1/3 from (1/3) Re Tr applied in deltaS, staples carry only bare Symanzik
+        ### coeffs 5/3 and -1/12 - see, e.g., Lepages's LQCD for Novices, Eq. (103)
+        ans_fwd = (5. * plaquette1 / self.u0**3 / 3.) - (rectangle_fwd / self.u0**5 / 12.)
+        ans_bwd = (5. * plaquette2 / self.u0**3 / 3.) - (rectangle_bwd / self.u0**5 / 12.)
 
         return ans_fwd, ans_bwd
 
