@@ -51,6 +51,19 @@ Chris Bouchard
   - added calculation of topological charge script, topo.py
   - topological charge now defaults to use of clover term, the calculation of which has 
     been added to gauge_latticeqcd.py
+* 20 Sep 2026
+  - tracking version via GitHub rep 
+  - using Claude to help with efficiency and to make improvements
+    . made generate.py and action_v_config.py read parameters from command line
+    . removed pre-run generation of SU(3) matrices for updates to prevent autocorrelation
+      from having Ncfg >> Nmatrices, at expense of about x1.6 slowdown.
+    . fixed normalization of rectangle improvement term
+    . added shift of beta when tadpole improving unimproved Wilson action, i.e. in W_T
+    . accounted for fact that fn_a(beta) is only known (by me at the moment) for W or W_T,
+      and not for Luscher-Weisz improved version (WR or WR_T).
+    . for tadpole improving, added flag to freeze u0 after thermalization and fixed logging
+      of values of u0
+    . standardized use of math/random instead of numpy/random for reproducibility and speed
 To do:
 * optimize (better numba implementation, ...)
 * add gradient flow and scale-setting measurement code to determine lattice spacing
