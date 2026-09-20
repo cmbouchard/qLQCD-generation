@@ -10,6 +10,10 @@ import argparse
 
 ### Script to calculate the evolution of the action as a function of Monte Carlo time
 ###   e.g.  python action_v_cfg.py --action WR_T --beta 4.4 --Nt 6 --Nx 6 --Ny 6 --Nz 6 --Nstart 0 --Nend 1000
+###   observable (--obs):  action (default)  the action of the ensemble's own action (W, WR, W_T, WR_T)
+###                        W11               average 1x1 Wilson loop (plaquette) <W11> = <(1/3) Re Tr P_{mu nu}>,
+###                                          independent of u0 -- use it to track thermalisation and to
+###                                          determine u0 = <W11>^(1/4) for production
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Calculate the action versus configuration number for an existing ensemble "
@@ -27,6 +31,11 @@ def parse_args():
                         help="action the ensemble was generated with: W = Wilson, WR = Wilson with "
                              "rectangle improvement; _T = tadpole improved (default: WR_T)")
     parser.add_argument("--beta", type=float, default=4.4, help="beta = 6/g^2 (default: 4.4)")
+    parser.add_argument("--obs", choices=["action", "W11"], default="action",
+                        help="observable to calculate versus configuration: 'action' = the action "
+                             "given by --action, evaluated with the u0 logged for each configuration; "
+                             "'W11' = the average 1x1 Wilson loop <W11>, which does not depend on u0 "
+                             "(default: action)")
 
     args = parser.parse_args()
     if args.Nend < args.Nstart:
@@ -38,6 +47,7 @@ Nstart, Nend = args.Nstart, args.Nend
 Nt, Nx, Ny, Nz = args.Nt, args.Nx, args.Ny, args.Nz
 action = args.action
 beta = args.beta
+obs = args.obs
 
 ### ---- add to action_v_cfg.py, below the imports ------------------------------------------
 ### Loop starting at start_txyz, following steps = [(direction, +1/-1), ...].
@@ -74,7 +84,8 @@ def fn_eval_point_S_WR(U, t, x, y, z, beta, u0 = 1.):
 ### load the per-configuration u0 log written by gauge_latticeqcd.py during generation
 ### so that the action is evaluated with the same u0 that was actually used to
 ### generate each configuration. Non-tadpole ensembles have no u0 log and use u0 = 1.
-if action[-2:] == '_T':
+### (Not needed for --obs W11, which does not depend on u0.)
+if obs == 'action' and action[-2:] == '_T':
     u0_of_cfg = lc.fn_load_u0_log(action, Nt, Nx, Ny, Nz, beta, "./")
 else:
     u0_of_cfg = None
@@ -113,22 +124,33 @@ dir = './' + action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(
 U_infile = dir + 'link_' + action + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_b' + str(int(beta * 100)) + '_'
 
 ### prepare output file
-outfile = './S_v_cfg_' + str(int(beta * 100)) + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_' + action + '_' + str(Nstart) + '-' + str(Nend) + '.dat'
+### (obs = action: S_v_cfg_*.dat, as before; obs = W11: W11_v_cfg_*.dat)
+outname = 'S_v_cfg_' if obs == 'action' else 'W11_v_cfg_'
+outfile = './' + outname + str(int(beta * 100)) + '_' + str(Nt) + 'x' + str(Nx) + 'x' + str(Ny) + 'x' + str(Nz) + '_' + action + '_' + str(Nstart) + '-' + str(Nend) + '.dat'
 
 fout = open(outfile, 'w')
-fout.write('#1:cfg  2:S(QCD)  \n')
+if obs == 'action':
+    fout.write('#1:cfg  2:S(QCD)  \n')
+else:
+    fout.write('#1:cfg  2:<W11>  3:<W11>^(1/4)\n')
 
 for Ncfg in range(Nstart, Nend + 1):
 
     ### load lattice data
     U = np.load(U_infile + str(Ncfg))
 
-    ### use the u0 that was actually used to generate this configuration
-    u0 = u0_of_cfg[Ncfg] if u0_of_cfg is not None else 1.
+    if obs == 'action':
+        ### use the u0 that was actually used to generate this configuration
+        u0 = u0_of_cfg[Ncfg] if u0_of_cfg is not None else 1.
 
-    ### calculate action
-    S_QCD = calc_S_QCD(U, u0)
-    fout.write(str(Ncfg) + ' ' + str(S_QCD) + '\n' )
+        ### calculate action
+        S_QCD = calc_S_QCD(U, u0)
+        fout.write(str(Ncfg) + ' ' + str(S_QCD) + '\n' )
+    else:
+        ### average 1x1 Wilson loop, (1/3) Re Tr P_{mu nu} averaged over all sites and the 6 planes;
+        ### the fourth root is the tadpole u0 implied by this configuration
+        W11 = gl.fn_average_plaquette(U)
+        fout.write(str(Ncfg) + ' ' + str(W11) + ' ' + str(W11**0.25) + '\n' )
 
 #end Ncfg
 fout.close()

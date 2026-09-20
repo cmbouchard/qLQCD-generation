@@ -11,6 +11,7 @@ QC_*.pdf
 QP_*.pdf
 corr_QP_QC_*.pdf
 S_v_cfg_*.dat
+W11_v_cfg_*.dat
 Sbin_*.dat
 plaquette_v_cfg_*.dat
 test_wf_*.dat

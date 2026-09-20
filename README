@@ -64,6 +64,7 @@ Chris Bouchard
     . for tadpole improving, added flag to freeze u0 after thermalization and fixed logging
       of values of u0
     . standardized use of math/random instead of numpy/random for reproducibility and speed
+    . made action_v_cfg.py calculate 1x1 Wilson loop, specified via flag --obs W11
 To do:
 * optimize (better numba implementation, ...)
 * add gradient flow and scale-setting measurement code to determine lattice spacing
