@@ -3,6 +3,7 @@ __pycache__/
 
 ### generated output: measurement data, plots
 A_v_lag_*.dat
+A_*_v_lag_*.dat
 Q_v_cfg_*.dat
 Qc_*.dat
 Qp_*.dat
